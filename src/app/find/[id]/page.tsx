@@ -42,11 +42,37 @@ function ListingDetailContent() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedPhotoIdx, setSelectedPhotoIdx] = useState(0);
 
+  // AI Analysis state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<{ analysis: string; provider: string } | null>(null);
+
   // New review state
   const [reviewerName, setReviewerName] = useState(profile?.name || '');
   const [newRating, setNewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSuccess, setReviewSuccess] = useState(false);
+
+  const handleRunAiAnalysis = async () => {
+    setAiLoading(true);
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'analyze-room',
+          payload: { listing, profile },
+        }),
+      });
+      const data = await res.json();
+      if (data.analysis) {
+        setAiResult({ analysis: data.analysis, provider: data.provider });
+      }
+    } catch (err) {
+      console.error('AI analysis error:', err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   if (!listing) {
     return (
@@ -483,6 +509,50 @@ function ListingDetailContent() {
             >
               Update your habits profile &rarr;
             </Link>
+          </div>
+
+          {/* Local Qwen 2.5 AI Room Analyzer Card */}
+          <div className="p-6 bg-[#6EC6FF]/20 border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b-[2px] border-[#111]">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🤖</span>
+                <h3 className="font-heading font-black text-sm md:text-base text-[#111]">
+                  Qwen 2.5 Room Advisor
+                </h3>
+              </div>
+              <span className="px-2 py-0.5 bg-[#3DDC97] border border-[#111] rounded-full text-[10px] font-black shadow-[1px_1px_0_#111]">
+                Local AI
+              </span>
+            </div>
+
+            <p className="text-xs font-semibold text-gray-700 leading-relaxed">
+              Run real-time deep analysis on this room using your local <strong>qwen2.5:1.5b</strong> model running on Ollama.
+            </p>
+
+            {aiResult && (
+              <div className="p-4 bg-white border-[2px] border-[#111] rounded-[16px] space-y-2.5 shadow-[2px_2px_0_#111] animate-in fade-in">
+                <div className="flex items-center justify-between pb-1 border-b border-gray-100 text-[10px] font-black text-gray-500">
+                  <span>ANALYSIS REPORT</span>
+                  <span className="text-emerald-700 font-mono">{aiResult.provider}</span>
+                </div>
+                <div className="text-xs font-medium text-gray-800 leading-relaxed whitespace-pre-line">
+                  {aiResult.analysis}
+                </div>
+              </div>
+            )}
+
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              size="md"
+              disabled={aiLoading}
+              onClick={handleRunAiAnalysis}
+              className="py-3"
+            >
+              <Sparkles size={16} />
+              <span>{aiLoading ? 'Qwen 2.5 is Analyzing...' : aiResult ? 'Re-Analyze with Qwen AI' : 'Analyze Room with Qwen AI'}</span>
+            </Button>
           </div>
         </div>
       </div>

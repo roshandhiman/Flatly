@@ -22,7 +22,8 @@ import {
   Wallet,
   Calculator,
   ShieldCheck,
-  Check
+  Check,
+  Sparkles
 } from 'lucide-react';
 
 export default function ExpensesPage() {
@@ -37,6 +38,10 @@ export default function ExpensesPage() {
   const [splitBetween, setSplitBetween] = useState<string[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [successNote, setSuccessNote] = useState(false);
+
+  // AI Expense Analyzer State
+  const [expAiLoading, setExpAiLoading] = useState(false);
+  const [expAiResult, setExpAiResult] = useState<{ analysis: string; provider: string } | null>(null);
 
   const members = flat?.members || [];
 
@@ -121,6 +126,32 @@ export default function ExpensesPage() {
       </div>
     );
   }
+
+  // Qwen AI Expense Analyzer
+  const handleExpenseAI = async () => {
+    setExpAiLoading(true);
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'analyze-expenses',
+          payload: {
+            flatName: flat?.name,
+            totalRent: flat?.rent,
+            expenses,
+            members,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.analysis) setExpAiResult({ analysis: data.analysis, provider: data.provider });
+    } catch {
+      // silently fail
+    } finally {
+      setExpAiLoading(false);
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
@@ -464,6 +495,30 @@ export default function ExpensesPage() {
             <p className="text-xs font-semibold text-gray-600 leading-relaxed">
               Flatly automatically pairs the biggest debtor with the biggest creditor. This minimizes the number of bank/UPI transfers needed and guarantees net balances sum to <strong>₹0.00</strong>.
             </p>
+          </div>
+
+          {/* Qwen AI Expense Advisor Card */}
+          <div className="p-6 bg-[#6EC6FF]/20 border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b-[2px] border-[#111]">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🤖</span>
+                <h3 className="font-heading font-black text-sm text-[#111]">Qwen AI Expense Advisor</h3>
+              </div>
+              <span className="px-2 py-0.5 bg-[#3DDC97] border border-[#111] rounded-full text-[10px] font-black shadow-[1px_1px_0_#111]">Local AI</span>
+            </div>
+            <p className="text-xs font-semibold text-gray-700">
+              Analyze your flat&apos;s hisab with local <span className="font-black text-[#111]">qwen2.5:1.5b</span> running on Ollama.
+            </p>
+            {expAiResult && (
+              <div className="p-4 bg-white border-[2px] border-[#111] rounded-[16px] space-y-2 shadow-[2px_2px_0_#111]">
+                <div className="text-[10px] font-black text-emerald-700 pb-1 border-b border-gray-100">{expAiResult.provider}</div>
+                <div className="text-xs font-medium text-gray-800 leading-relaxed whitespace-pre-line">{expAiResult.analysis}</div>
+              </div>
+            )}
+            <Button type="button" variant="secondary" fullWidth size="md" disabled={expAiLoading} onClick={handleExpenseAI}>
+              <Sparkles size={16} />
+              <span>{expAiLoading ? 'Qwen 2.5 Analyzing Hisab...' : expAiResult ? 'Re-Analyze Expenses' : 'Analyze Hisab with Qwen AI'}</span>
+            </Button>
           </div>
         </div>
       </div>
