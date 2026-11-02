@@ -2,6 +2,7 @@
 
 import { Flat, Expense, Settlement, Chore, ChoreCompletion, Rule, Listing, UserProfile, Member } from './types';
 import { generateId, generateJoinCode, getAvatarColor } from './utils';
+import { supabase } from './supabase';
 import {
   createFlatInSupabase,
   joinFlatInSupabase,
@@ -18,7 +19,9 @@ import {
   toggleRuleAgreementInSupabase,
   deleteRuleFromSupabase,
   syncFlatDataFromSupabase,
-  updateFlatImageInSupabase
+  updateFlatImageInSupabase,
+  getFlatForUser,
+  saveUserProfileToSupabase
 } from './flatApi';
 
 // ---- localStorage helpers ----
@@ -214,12 +217,90 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // Fallback to localStorage data
       });
     }
+
+    // Check if authenticated user already has a saved flat in Supabase
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user?.id) {
+        const userId = session.user.id;
+        // If user profile is not set, resolve from auth metadata
+        if (!p?.name) {
+          const metaName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Roommate';
+          const newProfile: UserProfile = {
+            name: metaName,
+            habits: {
+              sleepTime: 'Moderate (11 PM - 1 AM)',
+              cleanliness: 'Regular tidy up',
+              guests: 'Weekends only',
+              foodPreference: 'No preference',
+              smoking: 'Non-smoker',
+            }
+          };
+          setProfileState(newProfile);
+          saveToStorage('profile', newProfile);
+        }
+
+        // Fetch their cloud-synced flat
+        const userCloudData = await getFlatForUser(userId);
+        if (userCloudData?.flat) {
+          setFlatState(userCloudData.flat);
+          saveToStorage('flat', userCloudData.flat);
+          setExpensesState(userCloudData.expenses);
+          saveToStorage('expenses', userCloudData.expenses);
+          setSettlementsState(userCloudData.settlements);
+          saveToStorage('settlements', userCloudData.settlements);
+          setChoresState(userCloudData.chores);
+          saveToStorage('chores', userCloudData.chores);
+          setRulesState(userCloudData.rules);
+          saveToStorage('rules', userCloudData.rules);
+        }
+      }
+    });
+
+    // Listen for auth changes (login / logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user?.id) {
+        const userCloudData = await getFlatForUser(session.user.id);
+        if (userCloudData?.flat) {
+          setFlatState(userCloudData.flat);
+          saveToStorage('flat', userCloudData.flat);
+          setExpensesState(userCloudData.expenses);
+          saveToStorage('expenses', userCloudData.expenses);
+          setSettlementsState(userCloudData.settlements);
+          saveToStorage('settlements', userCloudData.settlements);
+          setChoresState(userCloudData.chores);
+          saveToStorage('chores', userCloudData.chores);
+          setRulesState(userCloudData.rules);
+          saveToStorage('rules', userCloudData.rules);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setFlatState(null);
+        saveToStorage('flat', null);
+        setExpensesState([]);
+        saveToStorage('expenses', []);
+        setChoresState([]);
+        saveToStorage('chores', []);
+        setSettlementsState([]);
+        saveToStorage('settlements', []);
+        setRulesState([]);
+        saveToStorage('rules', []);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Persist helpers
-  const setProfile = useCallback((p: UserProfile) => {
+  const setProfile = useCallback(async (p: UserProfile) => {
     setProfileState(p);
     saveToStorage('profile', p);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        await saveUserProfileToSupabase(user.id, p.name, user.email, user.phone, p.habits);
+      }
+    } catch (e) {}
   }, []);
 
   const createFlat = useCallback(async (name: string, rent: number, creatorName?: string) => {
@@ -227,7 +308,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     let newFlat: Flat | null = null;
     
     try {
-      newFlat = await createFlatInSupabase(name, rent, creator);
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+      newFlat = await createFlatInSupabase(name, rent, creator, currentUserId);
     } catch (e) {
       // Supabase offline/error fallback
     }
@@ -241,7 +324,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         members: [{
           id: generateId(),
           name: creator,
-          avatarColor: getAvatarColor(0)
+          avatarColor: getAvatarColor(0),
+          role: 'admin'
         }],
         createdAt: new Date().toISOString(),
       };
@@ -255,10 +339,59 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const joinFlat = useCallback(async (code: string, userName?: string) => {
     const user = userName || profile?.name || 'New Flatmate';
     try {
-      const res = await joinFlatInSupabase(code, user);
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+      const res = await joinFlatInSupabase(code, user, currentUserId);
       if (res.success && res.flat) {
         setFlatState(res.flat);
         saveToStorage('flat', res.flat);
+
+        // Also fetch and set expenses/chores/rules for this joined flat
+        syncFlatDataFromSupabase(res.flat.id).then(syncRes => {
+          if (syncRes.expenses && syncRes.expenses.length > 0) {
+            const exp: Expense[] = syncRes.expenses.map((e: any) => ({
+              id: e.id,
+              title: e.title,
+              amount: Number(e.amount),
+              paidBy: e.paid_by,
+              splitBetween: e.split_between,
+              date: e.date,
+              createdAt: e.created_at
+            }));
+            setExpensesState(exp);
+            saveToStorage('expenses', exp);
+          }
+          if (syncRes.chores && syncRes.chores.length > 0) {
+            const cho: Chore[] = syncRes.chores.map((c: any) => ({
+              id: c.id,
+              task: c.task,
+              assignedTo: c.assigned_to,
+              frequency: c.frequency,
+              dueDay: c.due_day,
+              status: c.status,
+              completions: (c.chore_completions || []).map((cc: any) => ({
+                id: cc.id,
+                choreId: cc.chore_id,
+                completedBy: cc.completed_by,
+                completedAt: cc.completed_at
+              })),
+              createdAt: c.created_at
+            }));
+            setChoresState(cho);
+            saveToStorage('chores', cho);
+          }
+          if (syncRes.rules && syncRes.rules.length > 0) {
+            const rls: Rule[] = syncRes.rules.map((r: any) => ({
+              id: r.id,
+              text: r.text,
+              agreedBy: r.agreed_by || [],
+              createdAt: r.created_at
+            }));
+            setRulesState(rls);
+            saveToStorage('rules', rls);
+          }
+        });
+
         return { success: true };
       }
       return { success: false, error: res.error || 'Invalid code' };
@@ -269,7 +402,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         name: `Flat ${code.toUpperCase()}`,
         rent: 0,
         code: code.toUpperCase(),
-        members: [{ id: generateId(), name: user, avatarColor: getAvatarColor(0) }],
+        members: [{ id: generateId(), name: user, avatarColor: getAvatarColor(0), role: 'member' }],
         createdAt: new Date().toISOString(),
       };
       setFlatState(newFlat);

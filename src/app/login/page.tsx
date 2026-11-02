@@ -23,7 +23,7 @@ function LoginContent() {
   const { setProfile, profile } = useStore();
 
   const [authMethod, setAuthMethod] = useState<'phone' | 'email'>('phone');
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(searchParams.get('mode') === 'signup');
 
   // Phone states
   const [phone, setPhone] = useState('');

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import { useAuth } from '@/lib/AuthContext';
 import { syncFlatDataFromSupabase } from '@/lib/flatApi';
 import { formatINR } from '@/lib/utils';
 import { Card } from '@/components/ui/Card';
@@ -54,6 +55,7 @@ const PHOTO_PRESETS = [
 
 export default function LiveDashboardPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const {
     flat,
     createFlat,
@@ -209,10 +211,71 @@ export default function LiveDashboardPage() {
     reader.readAsDataURL(file);
   };
 
-  if (!isHydrated) {
+  if (authLoading || !isHydrated) {
     return (
       <div className="p-8 text-center font-heading font-black text-sm text-[#111]">
         Loading your flat dashboard... 🏠
+      </div>
+    );
+  }
+
+  // AUTH GATE: User must be logged in to view / setup flats
+  if (!user) {
+    return (
+      <div className="p-4 md:p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
+        <div className="p-6 md:p-8 bg-[#FFF8EC] border-[3px] border-[#111] rounded-[24px] shadow-[8px_8px_0_#111] space-y-6 text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#FFD23F] border-[2px] border-[#111] rounded-full text-xs font-black shadow-[2px_2px_0_#111]">
+            <ShieldCheck size={16} />
+            <span>LOGIN REQUIRED</span>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="font-heading font-black text-2xl md:text-3xl text-[#111]">
+              Live Flat Hisab &amp; Chores Ke Liye Login Karein 🏠
+            </h1>
+            <p className="text-xs md:text-sm font-semibold text-gray-600 max-w-md mx-auto leading-relaxed">
+              Login ensures your flat data, roommate hisab, chores, and group chat stay securely connected to your account across your phone and laptop.
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2 max-w-sm mx-auto">
+            <Link
+              href="/login?redirect=/live"
+              className="flex-1 px-5 py-3.5 bg-[#FFD23F] text-[#111] border-[2px] border-[#111] rounded-[14px] font-heading font-black text-sm shadow-[3px_3px_0_#111] hover:bg-[#ffe17d] hover:translate-x-[1px] hover:translate-y-[1px] transition-all flex items-center justify-center gap-2"
+            >
+              <span>Login to Account</span>
+              <ArrowRight size={16} />
+            </Link>
+
+            <Link
+              href="/login?mode=signup&redirect=/live"
+              className="flex-1 px-5 py-3.5 bg-white text-[#111] border-[2px] border-[#111] rounded-[14px] font-heading font-black text-sm shadow-[3px_3px_0_#111] hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+            >
+              <span>Sign Up Free</span>
+            </Link>
+          </div>
+
+          {/* Feature Highlights */}
+          <div className="pt-4 border-t-[2px] border-[#111] text-left grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-bold text-gray-700">
+            <div className="flex items-start gap-2 p-3 bg-white border border-[#111] rounded-[12px] shadow-[1.5px_1.5px_0_#111]">
+              <span className="text-base">📱</span>
+              <span>Cloud sync between phone &amp; laptop</span>
+            </div>
+            <div className="flex items-start gap-2 p-3 bg-white border border-[#111] rounded-[12px] shadow-[1.5px_1.5px_0_#111]">
+              <span className="text-base">💸</span>
+              <span>Fair hisab &amp; zero-loss debt settlement</span>
+            </div>
+            <div className="flex items-start gap-2 p-3 bg-white border border-[#111] rounded-[12px] shadow-[1.5px_1.5px_0_#111]">
+              <span className="text-base">🧹</span>
+              <span>Weekly rotating chores so no one argues</span>
+            </div>
+            <div className="flex items-start gap-2 p-3 bg-white border border-[#111] rounded-[12px] shadow-[1.5px_1.5px_0_#111]">
+              <span className="text-base">💬</span>
+              <span>Real-time roommate chat &amp; flat agreements</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

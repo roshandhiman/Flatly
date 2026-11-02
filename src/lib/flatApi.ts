@@ -2,13 +2,23 @@ import { supabase } from './supabase';
 import { Flat, Member, Expense, Settlement, Chore, Rule, ChatMessage } from './types';
 import { generateId, generateJoinCode, getAvatarColor } from './utils';
 
-export async function createFlatInSupabase(name: string, rent: number, creatorName: string) {
+export async function createFlatInSupabase(
+  name: string,
+  rent: number,
+  creatorName: string,
+  creatorUserId?: string
+) {
   const code = generateJoinCode();
   
-  // 1. Insert flat
+  // 1. Insert flat with created_by linked to Supabase auth user
   const { data: flatData, error: flatError } = await supabase
     .from('flats')
-    .insert([{ name, rent, code }])
+    .insert([{
+      name,
+      rent,
+      code,
+      created_by: creatorUserId || null
+    }])
     .select()
     .single();
 
@@ -17,11 +27,12 @@ export async function createFlatInSupabase(name: string, rent: number, creatorNa
     return null;
   }
 
-  // 2. Add creator as initial member
+  // 2. Add creator as initial member with user_id linked to Supabase auth user
   const { data: memberData, error: memberError } = await supabase
     .from('flat_members')
     .insert([{
       flat_id: flatData.id,
+      user_id: creatorUserId || null,
       name: creatorName || 'Me (Admin)',
       avatar_color: getAvatarColor(0),
       role: 'admin'
@@ -46,7 +57,11 @@ export async function createFlatInSupabase(name: string, rent: number, creatorNa
   } as Flat;
 }
 
-export async function joinFlatInSupabase(code: string, userName: string) {
+export async function joinFlatInSupabase(
+  code: string,
+  userName: string,
+  userId?: string
+) {
   // 1. Fetch flat by code
   const { data: flatData, error: flatError } = await supabase
     .from('flats')
@@ -60,7 +75,11 @@ export async function joinFlatInSupabase(code: string, userName: string) {
 
   // 2. Check if user is already a member
   const existingMembers = flatData.flat_members || [];
-  const alreadyMember = existingMembers.some((m: any) => m.name.toLowerCase() === userName.toLowerCase());
+  const existingMember = existingMembers.find(
+    (m: any) =>
+      (userId && m.user_id === userId) ||
+      m.name.toLowerCase() === userName.toLowerCase()
+  );
 
   let currentMembers: Member[] = existingMembers.map((m: any) => ({
     id: m.id,
@@ -69,11 +88,18 @@ export async function joinFlatInSupabase(code: string, userName: string) {
     role: (m.role || 'member') as 'admin' | 'member'
   }));
 
-  if (!alreadyMember && userName) {
+  if (existingMember && userId && !existingMember.user_id) {
+    // Attach userId to existing member record so it links to their login
+    await supabase
+      .from('flat_members')
+      .update({ user_id: userId })
+      .eq('id', existingMember.id);
+  } else if (!existingMember && userName) {
     const { data: newMem, error: memErr } = await supabase
       .from('flat_members')
       .insert([{
         flat_id: flatData.id,
+        user_id: userId || null,
         name: userName,
         avatar_color: getAvatarColor(currentMembers.length),
         role: 'member'
@@ -96,6 +122,7 @@ export async function joinFlatInSupabase(code: string, userName: string) {
     name: flatData.name,
     rent: Number(flatData.rent),
     code: flatData.code,
+    imageUrl: flatData.image_url,
     members: currentMembers,
     createdAt: flatData.created_at
   };
@@ -279,4 +306,132 @@ export async function syncFlatDataFromSupabase(flatId: string) {
     chores: choreRes.data || [],
     rules: ruleRes.data || []
   };
+}
+
+// --- Fetch user's connected flat across devices ---
+export async function getFlatForUser(userId: string): Promise<{
+  flat: Flat;
+  expenses: Expense[];
+  settlements: Settlement[];
+  chores: Chore[];
+  rules: Rule[];
+} | null> {
+  try {
+    // 1. Look up flat_members for this user_id
+    const { data: memberRows } = await supabase
+      .from('flat_members')
+      .select('flat_id')
+      .eq('user_id', userId)
+      .order('joined_at', { ascending: false })
+      .limit(1);
+
+    let flatId = memberRows?.[0]?.flat_id;
+
+    // 2. If not found by user_id, check flats where created_by = userId
+    if (!flatId) {
+      const { data: createdFlats } = await supabase
+        .from('flats')
+        .select('id')
+        .eq('created_by', userId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      flatId = createdFlats?.[0]?.id;
+    }
+
+    if (!flatId) return null;
+
+    const data = await syncFlatDataFromSupabase(flatId);
+    if (!data.flat) return null;
+
+    const remoteMembers: Member[] = (data.flat.flat_members || []).map((m: any) => ({
+      id: m.id,
+      name: m.name,
+      avatarColor: m.avatar_color,
+      role: (m.role || 'member') as 'admin' | 'member'
+    }));
+
+    const flat: Flat = {
+      id: data.flat.id,
+      name: data.flat.name,
+      rent: Number(data.flat.rent),
+      code: data.flat.code,
+      imageUrl: data.flat.image_url,
+      members: remoteMembers,
+      createdAt: data.flat.created_at
+    };
+
+    const expenses: Expense[] = (data.expenses || []).map((e: any) => ({
+      id: e.id,
+      title: e.title,
+      amount: Number(e.amount),
+      paidBy: e.paid_by,
+      splitBetween: e.split_between,
+      date: e.date,
+      createdAt: e.created_at
+    }));
+
+    const settlements: Settlement[] = (data.settlements || []).map((s: any) => ({
+      id: s.id,
+      from: s.from_member,
+      to: s.to_member,
+      amount: Number(s.amount),
+      date: s.date
+    }));
+
+    const chores: Chore[] = (data.chores || []).map((c: any) => ({
+      id: c.id,
+      task: c.task,
+      assignedTo: c.assigned_to,
+      frequency: c.frequency,
+      dueDay: c.due_day,
+      status: c.status,
+      completions: (c.chore_completions || []).map((cc: any) => ({
+        id: cc.id,
+        choreId: cc.chore_id,
+        completedBy: cc.completed_by,
+        completedAt: cc.completed_at
+      })),
+      createdAt: c.created_at
+    }));
+
+    const rules: Rule[] = (data.rules || []).map((r: any) => ({
+      id: r.id,
+      text: r.text,
+      agreedBy: Array.isArray(r.agreed_by) ? r.agreed_by : [],
+      createdAt: r.created_at
+    }));
+
+    return { flat, expenses, settlements, chores, rules };
+  } catch (err) {
+    console.error('getFlatForUser error:', err);
+    return null;
+  }
+}
+
+// --- Save profile to Supabase profiles table ---
+export async function saveUserProfileToSupabase(
+  userId: string,
+  name: string,
+  email?: string,
+  phone?: string,
+  habits?: any
+) {
+  try {
+    await supabase.from('profiles').upsert({
+      id: userId,
+      name,
+      email: email || null,
+      phone: phone || null,
+      habits: habits || {
+        sleepTime: 'Moderate (11 PM - 1 AM)',
+        cleanliness: 'Regular tidy up',
+        guests: 'Weekends only',
+        foodPreference: 'No preference',
+        smoking: 'Non-smoker',
+      },
+      updated_at: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('saveUserProfileToSupabase error:', err);
+  }
 }
