@@ -19,7 +19,6 @@ import {
   Search,
   Sparkles,
   Users,
-  Zap,
   DollarSign,
   Receipt,
   RotateCw,
@@ -31,7 +30,6 @@ import {
 export default function HomePage() {
   const router = useRouter();
   const { profile, flat, expenses, settlements, chores, rules, listings, markChoreDone, rotateChore } = useStore();
-  const [selectedMode, setSelectedMode] = useState<'find' | 'live'>('live');
   const [copiedCode, setCopiedCode] = useState(false);
 
   // Find user's member ID in flat if matched by name
@@ -108,32 +106,6 @@ export default function HomePage() {
             <span>📢 Post Vacancy</span>
           </Link>
         </div>
-      </div>
-
-      {/* Mode Switcher Toggle (Mobile & Tablet) */}
-      <div className="flex gap-2 p-1.5 bg-white border-[2.5px] border-[#111] rounded-[18px] shadow-[4px_4px_0_#111] max-w-md">
-        <button
-          onClick={() => setSelectedMode('find')}
-          className={`flex-1 py-2 md:py-2.5 rounded-[12px] font-heading font-black text-xs md:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            selectedMode === 'find'
-              ? 'bg-[#FFD23F] text-[#111] border-[2px] border-[#111] shadow-[2px_2px_0_#111]'
-              : 'text-gray-500 hover:text-[#111]'
-          }`}
-        >
-          <Search size={16} strokeWidth={2.5} />
-          <span>FIND MODE (Rooms & Roommates)</span>
-        </button>
-        <button
-          onClick={() => setSelectedMode('live')}
-          className={`flex-1 py-2 md:py-2.5 rounded-[12px] font-heading font-black text-xs md:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            selectedMode === 'live'
-              ? 'bg-[#FFD23F] text-[#111] border-[2px] border-[#111] shadow-[2px_2px_0_#111]'
-              : 'text-gray-500 hover:text-[#111]'
-          }`}
-        >
-          <Zap size={16} strokeWidth={2.5} />
-          <span>LIVE MODE (Hisab & Chores)</span>
-        </button>
       </div>
 
       {/* Action Cards: Find & Post (Mobile grid, wide on desktop) */}
