@@ -35,7 +35,7 @@ function ListingDetailContent() {
   const router = useRouter();
   const id = params?.id as string;
 
-  const { listings, deleteListing, addReviewToListing, profile } = useStore();
+  const { listings, addReviewToListing, profile } = useStore();
   const listing = listings.find((l) => l.id === id);
 
   const [isConnectOpen, setIsConnectOpen] = useState(false);
@@ -68,13 +68,6 @@ function ListingDetailContent() {
       </div>
     );
   }
-
-  const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this listing?')) {
-      deleteListing(listing.id);
-      router.push('/find');
-    }
-  };
 
   const handleShare = () => {
     if (navigator.clipboard) {
@@ -131,14 +124,6 @@ function ListingDetailContent() {
           >
             <Share2 size={15} />
             <span>{copiedLink ? 'Link Copied!' : 'Share Room'}</span>
-          </button>
-
-          <button
-            onClick={handleDelete}
-            className="p-2 rounded-[12px] bg-white border-[2px] border-[#111] shadow-[2.5px_2.5px_0_#111] text-red-600 hover:bg-red-50 cursor-pointer transition-all"
-            title="Delete this listing"
-          >
-            <Trash2 size={16} />
           </button>
         </div>
       </div>

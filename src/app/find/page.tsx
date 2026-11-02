@@ -51,7 +51,7 @@ function FindPageContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') === 'post' ? 'post' : 'rooms';
 
-  const { listings, addListing, deleteListing } = useStore();
+  const { listings, addListing } = useStore();
   const [activeTab, setActiveTab] = useState<'rooms' | 'post'>(initialTab);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
 
@@ -502,10 +502,10 @@ function FindPageContent() {
                     >
                       <div>
                         {/* Real Photo Header */}
-                        <div className="relative h-48 bg-gray-100 border-b-[2.5px] border-[#111] overflow-hidden">
+                        <div className="relative h-48 bg-gradient-to-br from-[#FFF8EC] to-[#FFD23F]/20 border-b-[2.5px] border-[#111] overflow-hidden">
                           <img
                             src={listing.imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'}
-                            alt={listing.title}
+                            alt=""
                             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                           />
 
@@ -585,21 +585,13 @@ function FindPageContent() {
                       </div>
 
                       {/* Actions Bar */}
-                      <div className="p-4 md:p-5 pt-0 flex items-center gap-2">
+                      <div className="p-4 md:p-5 pt-0">
                         <Link
                           href={`/find/${listing.id}`}
-                          className="flex-1 py-2.5 px-4 bg-[#FFD23F] border-[2px] border-[#111] rounded-[12px] shadow-[2.5px_2.5px_0_#111] text-xs font-black text-center hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+                          className="block w-full py-2.5 px-4 bg-[#FFD23F] border-[2px] border-[#111] rounded-[12px] shadow-[2.5px_2.5px_0_#111] text-xs font-black text-center hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-[#ffe17d] transition-all"
                         >
                           View Room &amp; Reviews &rarr;
                         </Link>
-
-                        <button
-                          onClick={() => deleteListing(listing.id)}
-                          className="p-2.5 border-[2px] border-[#111] rounded-[12px] bg-white shadow-[2px_2px_0_#111] text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
-                          title="Delete this listing"
-                        >
-                          <Trash2 size={16} />
-                        </button>
                       </div>
                     </div>
                   ))}
