@@ -1,14 +1,18 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home as HomeIcon, ArrowLeft, Search, Zap, User, Sparkles, Building2 } from 'lucide-react';
+import { Home as HomeIcon, ArrowLeft, Search, Zap, User, Building2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { flat, profile } = useStore();
+  // Guard against hydration mismatch: profile comes from localStorage, only available client-side
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const isSubpage = pathname.split('/').filter(Boolean).length > 1;
   const isFindMode = pathname.startsWith('/find');
@@ -75,8 +79,8 @@ export function AppHeader() {
 
       {/* Right controls: Flat pill & Mode toggle */}
       <div className="flex items-center gap-2.5">
-        {/* Flat info pill on tablet/laptop */}
-        {flat ? (
+        {/* Flat info pill on tablet/laptop — client-side only */}
+        {mounted && flat ? (
           <Link
             href="/live"
             className="hidden sm:inline-flex items-center gap-2 px-3 py-1 bg-white border-[2px] border-[#111] rounded-full shadow-[2px_2px_0_#111] text-xs font-bold hover:bg-[#FFD23F] transition-all"
@@ -119,13 +123,16 @@ export function AppHeader() {
           </Link>
         </div>
 
-        {/* Profile Avatar on Desktop */}
+        {/* Profile Avatar on Desktop — rendered client-side only to avoid hydration mismatch */}
         <Link
           href="/profile"
           className="hidden md:flex w-9 h-9 rounded-full bg-[#111] text-[#FFD23F] font-black text-xs items-center justify-center border-[2px] border-[#111] shadow-[2px_2px_0_#111] hover:scale-105 transition-transform"
-          title={profile?.name || 'My Profile'}
+          title="My Profile"
+          suppressHydrationWarning
         >
-          {profile?.name ? profile.name.slice(0, 2).toUpperCase() : 'ME'}
+          <span suppressHydrationWarning>
+            {mounted && profile?.name ? profile.name.slice(0, 2).toUpperCase() : 'ME'}
+          </span>
         </Link>
       </div>
     </header>

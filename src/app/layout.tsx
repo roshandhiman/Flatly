@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter } from 'next/font/google';
 import { Suspense } from 'react';
 import './globals.css';
 import { StoreProvider } from '@/lib/store';
+import { AuthProvider } from '@/lib/AuthContext';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { BottomTabBar } from '@/components/layout/BottomTabBar';
 import { FirstRunModal } from '@/components/layout/FirstRunModal';
@@ -33,6 +34,7 @@ export default function RootLayout({
     <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-[#F0EBE1] flex justify-center items-start md:p-6 lg:p-8">
         <StoreProvider>
+          <AuthProvider>
           {/* Responsive Shell: Native phone on mobile (<md), elegant wide dashboard on tablets & laptops (md+) */}
           <div className="w-full md:max-w-5xl lg:max-w-6xl xl:max-w-7xl min-h-screen md:min-h-[calc(100vh-4rem)] bg-[#FFF8EC] md:border-[3.5px] border-[#111] md:rounded-[32px] md:shadow-[12px_12px_0_#111] flex flex-col overflow-hidden relative transition-all duration-200">
             <Suspense fallback={<div className="h-16 bg-[#FFF8EC] border-b-[2.5px] border-[#111]" />}>
@@ -46,6 +48,7 @@ export default function RootLayout({
             </Suspense>
             <FirstRunModal />
           </div>
+          </AuthProvider>
         </StoreProvider>
       </body>
     </html>

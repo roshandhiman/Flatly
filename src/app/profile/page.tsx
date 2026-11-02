@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Chip } from '@/components/ui/Chip';
 import { Card } from '@/components/ui/Card';
-import { Avatar } from '@/components/ui/Avatar';
-import { Check, RotateCcw, Save, Sparkles, User, ShieldCheck, Heart, LogIn } from 'lucide-react';
+import { Check, RotateCcw, Save, Sparkles, LogOut, LogIn, Mail, Phone } from 'lucide-react';
 
 const SLEEP_OPTIONS = [
   'Early bird (Before 11 PM)',
@@ -43,6 +43,8 @@ const SMOKING_OPTIONS = [
 
 export default function ProfilePage() {
   const { profile, setProfile, flat } = useStore();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
   const [name, setName] = useState('');
   const [sleepTime, setSleepTime] = useState('');
   const [cleanliness, setCleanliness] = useState('');
@@ -100,6 +102,14 @@ export default function ProfilePage() {
     }
   };
 
+  const handleLogout = async () => {
+    if (confirm('Logout karna chahte ho?')) {
+      await signOut();
+      if (typeof window !== 'undefined') localStorage.clear();
+      router.push('/login');
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
       {/* Header */}
@@ -114,13 +124,24 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#FFD23F] border-[2px] border-[#111] rounded-full shadow-[2px_2px_0_#111] text-xs font-black hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
-          >
-            <LogIn size={14} />
-            <span>Login / Account</span>
-          </Link>
+          {user ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#FF3B3B] border-[2px] border-[#111] rounded-full shadow-[2px_2px_0_#111] text-xs font-black text-white hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+            >
+              <LogOut size={14} />
+              <span>Logout</span>
+            </button>
+          ) : (
+            <a
+              href="/login"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#FFD23F] border-[2px] border-[#111] rounded-full shadow-[2px_2px_0_#111] text-xs font-black hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+            >
+              <LogIn size={14} />
+              <span>Login / Account</span>
+            </a>
+          )}
         </div>
       </div>
 
@@ -136,25 +157,48 @@ export default function ProfilePage() {
         {/* Left Section: User Card & Habits Persona (Col 5) */}
         <div className="lg:col-span-5 space-y-6">
           {/* Supabase Auth Banner */}
-          <Link
-            href="/login"
-            className="flex items-center justify-between p-4 bg-[#FFD23F] border-[2.5px] border-[#111] rounded-[20px] shadow-[5px_5px_0_#111] hover:shadow-[2px_2px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] transition-all block"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🔐</span>
-              <div>
-                <div className="font-heading font-black text-sm md:text-base text-[#111]">
-                  Login / Cloud Account
-                </div>
-                <div className="text-xs font-bold text-gray-800">
-                  Sign in with Phone OTP, Email, or Google
+          {user ? (
+            <div className="flex items-center justify-between p-4 bg-[#3DDC97] border-[2.5px] border-[#111] rounded-[20px] shadow-[5px_5px_0_#111]">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">✅</span>
+                <div>
+                  <div className="font-heading font-black text-sm md:text-base text-[#111]">
+                    Logged In
+                  </div>
+                  <div className="text-xs font-bold text-gray-800 truncate max-w-[180px]">
+                    {user.email || user.phone || 'Authenticated User'}
+                  </div>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-xs font-black px-3 py-1 bg-white border-[1.5px] border-[#111] rounded-[10px] cursor-pointer hover:bg-red-50 transition-colors"
+              >
+                Logout →
+              </button>
             </div>
-            <span className="text-xs font-black px-3 py-1 bg-white border-[1.5px] border-[#111] rounded-[10px]">
-              Open &rarr;
-            </span>
-          </Link>
+          ) : (
+            <a
+              href="/login"
+              className="flex items-center justify-between p-4 bg-[#FFD23F] border-[2.5px] border-[#111] rounded-[20px] shadow-[5px_5px_0_#111] hover:shadow-[2px_2px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] transition-all block"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🔐</span>
+                <div>
+                  <div className="font-heading font-black text-sm md:text-base text-[#111]">
+                    Login / Cloud Account
+                  </div>
+                  <div className="text-xs font-bold text-gray-800">
+                    Sign in with Phone OTP, Email, or Google
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs font-black px-3 py-1 bg-white border-[1.5px] border-[#111] rounded-[10px]">
+                Open &rarr;
+              </span>
+            </a>
+          )}
 
           {/* Identity Card */}
           <div className="p-6 bg-white border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-4 text-center">

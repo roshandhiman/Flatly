@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   sendPhoneOTP,
   verifyPhoneOTP,
@@ -16,8 +16,10 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ArrowLeft, Check, KeyRound, Mail, Phone, ShieldCheck, Sparkles } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
   const { setProfile, profile } = useStore();
 
   const [authMethod, setAuthMethod] = useState<'phone' | 'email'>('phone');
@@ -85,7 +87,7 @@ export default function LoginPage() {
           },
         });
       }
-      setTimeout(() => router.push('/'), 1000);
+      setTimeout(() => router.push(redirectTo), 1000);
     } else {
       setError(res.error || 'Invalid OTP. Please try again.');
     }
@@ -117,7 +119,7 @@ export default function LoginPage() {
             smoking: 'Non-smoker',
           },
         });
-        setTimeout(() => router.push('/'), 1200);
+        setTimeout(() => router.push(redirectTo), 1200);
       } else {
         setError(res.error || 'Signup failed');
       }
@@ -126,7 +128,7 @@ export default function LoginPage() {
       setLoading(false);
       if (res.success) {
         setSuccessMsg('Logged in successfully!');
-        setTimeout(() => router.push('/'), 1000);
+        setTimeout(() => router.push(redirectTo), 1000);
       } else {
         setError(res.error || 'Invalid email or password');
       }
@@ -365,5 +367,13 @@ export default function LoginPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center font-bold text-[#111]">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
