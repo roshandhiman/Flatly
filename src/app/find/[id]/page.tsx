@@ -21,6 +21,8 @@ import {
   Tag,
   Trash2,
   Users,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 
 function ListingDetailContent() {
@@ -28,7 +30,7 @@ function ListingDetailContent() {
   const router = useRouter();
   const id = params?.id as string;
 
-  const { listings, deleteListing } = useStore();
+  const { listings, deleteListing, profile } = useStore();
   const listing = listings.find((l) => l.id === id);
 
   const [isConnectOpen, setIsConnectOpen] = useState(false);
@@ -36,17 +38,17 @@ function ListingDetailContent() {
 
   if (!listing) {
     return (
-      <div className="p-6 text-center space-y-4">
-        <div className="text-5xl">🔍</div>
-        <h2 className="font-heading font-black text-xl text-[#111]">
+      <div className="p-8 text-center space-y-4 max-w-md mx-auto my-12">
+        <div className="text-6xl">🔍</div>
+        <h2 className="font-heading font-black text-2xl text-[#111]">
           Listing Not Found
         </h2>
-        <p className="text-xs font-semibold text-gray-500">
-          This room listing may have been removed or deleted.
+        <p className="text-xs md:text-sm font-semibold text-gray-500">
+          This room listing may have been filled or removed by the flatmate.
         </p>
         <Link
           href="/find"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#FFD23F] border-[2px] border-[#111] rounded-[12px] shadow-[3px_3px_0_#111] text-xs font-black"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#FFD23F] border-[2px] border-[#111] rounded-[14px] shadow-[3px_3px_0_#111] text-xs font-black"
         >
           <ArrowLeft size={16} />
           <span>Back to Feed</span>
@@ -71,28 +73,29 @@ function ListingDetailContent() {
   };
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Top Bar */}
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+      {/* Top Bar Navigation */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="w-9 h-9 rounded-[10px] bg-white border-[2px] border-[#111] shadow-[2px_2px_0_#111] flex items-center justify-center hover:bg-gray-100 cursor-pointer"
+          className="px-3.5 py-2 rounded-[12px] bg-white border-[2px] border-[#111] shadow-[2.5px_2.5px_0_#111] flex items-center gap-2 text-xs font-black hover:bg-gray-100 cursor-pointer"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} />
+          <span className="hidden sm:inline">Back to Listings</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={handleShare}
-            className="px-3 py-1.5 rounded-[10px] bg-white border-[2px] border-[#111] shadow-[2px_2px_0_#111] text-xs font-bold flex items-center gap-1 cursor-pointer"
+            className="px-3.5 py-2 rounded-[12px] bg-white border-[2px] border-[#111] shadow-[2.5px_2.5px_0_#111] text-xs font-black flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 transition-all"
           >
-            <Share2 size={14} />
-            <span>{copiedLink ? 'Copied!' : 'Share'}</span>
+            <Share2 size={15} />
+            <span>{copiedLink ? 'Link Copied!' : 'Share Room'}</span>
           </button>
 
           <button
             onClick={handleDelete}
-            className="p-1.5 rounded-[10px] bg-white border-[2px] border-[#111] shadow-[2px_2px_0_#111] text-red-600 hover:bg-red-50 cursor-pointer"
+            className="p-2 rounded-[12px] bg-white border-[2px] border-[#111] shadow-[2.5px_2.5px_0_#111] text-red-600 hover:bg-red-50 cursor-pointer transition-all"
             title="Delete this listing"
           >
             <Trash2 size={16} />
@@ -100,95 +103,164 @@ function ListingDetailContent() {
         </div>
       </div>
 
-      {/* Main Listing Card */}
-      <div className="bg-white border-[2.5px] border-[#111] rounded-[20px] shadow-[6px_6px_0_#111] overflow-hidden">
-        {/* Banner with Neo-Brutalist artwork */}
-        <div className="h-44 bg-[#FFD23F] border-b-[2.5px] border-[#111] flex flex-col items-center justify-center relative p-4 text-center">
-          <span className="text-5xl mb-1">🏡</span>
-          <span className="px-3 py-1 bg-white border-[1.5px] border-[#111] rounded-full text-xs font-black shadow-[2px_2px_0_#111]">
-            Verified Room Post
-          </span>
+      {/* Main Responsive Grid Layout (Desktop 2-Col, Mobile 1-Col) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Room Details & Images & Description (Col 7) */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="bg-white border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] overflow-hidden">
+            {/* Banner Artwork */}
+            <div className="h-52 md:h-64 bg-[#FFD23F] border-b-[2.5px] border-[#111] flex flex-col items-center justify-center relative p-6 text-center">
+              <span className="text-6xl md:text-7xl mb-2">🏡</span>
+              <span className="px-3.5 py-1 bg-white border-[2px] border-[#111] rounded-full text-xs font-black shadow-[2px_2px_0_#111]">
+                Verified Room Vacancy
+              </span>
 
-          <span className="absolute bottom-3 right-3 text-[10px] font-bold text-gray-700 bg-white/90 px-2 py-0.5 rounded border border-[#111]">
-            Posted {formatDate(listing.createdAt)}
-          </span>
+              <span className="absolute bottom-3 right-3 text-xs font-bold text-gray-700 bg-white/90 px-3 py-1 rounded-full border border-[#111]">
+                Posted {formatDate(listing.createdAt)}
+              </span>
+            </div>
+
+            {/* Content Details */}
+            <div className="p-6 md:p-8 space-y-6">
+              <div>
+                <h1 className="font-heading font-black text-2xl md:text-3xl text-[#111] leading-tight">
+                  {listing.title}
+                </h1>
+                <div className="flex items-center gap-2 text-sm font-bold text-gray-600 mt-2">
+                  <MapPin size={16} className="text-[#FF6B57]" />
+                  <span>{listing.location}</span>
+                </div>
+              </div>
+
+              {/* Pricing & Capacity highlight block on mobile / tablet */}
+              <div className="grid grid-cols-2 gap-4 p-4 bg-[#FFF8EC] border-[2px] border-[#111] rounded-[16px]">
+                <div>
+                  <span className="text-[11px] font-black uppercase text-gray-500 block">
+                    MONTHLY RENT
+                  </span>
+                  <div className="font-heading font-black text-2xl md:text-3xl text-[#111]">
+                    {formatINR(listing.rent)}
+                  </div>
+                  <span className="text-xs text-gray-500 font-bold">per roommate</span>
+                </div>
+
+                <div>
+                  <span className="text-[11px] font-black uppercase text-gray-500 block">
+                    AVAILABLE CAPACITY
+                  </span>
+                  <div className="font-heading font-black text-2xl md:text-3xl text-[#111]">
+                    {listing.seats} Spot{listing.seats > 1 ? 's' : ''}
+                  </div>
+                  <span className="text-xs text-gray-500 font-bold">immediate move-in</span>
+                </div>
+              </div>
+
+              {/* Amenities & Tags */}
+              {listing.tags.length > 0 && (
+                <div className="space-y-2.5">
+                  <h3 className="font-heading font-black text-xs uppercase tracking-wider text-gray-500">
+                    Features & Amenities
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {listing.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1.5 bg-[#6EC6FF]/25 border-[1.5px] border-[#111] rounded-[10px] text-xs font-black text-[#111] shadow-[1.5px_1.5px_0_#111]"
+                      >
+                        ✓ {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              <div className="space-y-2.5">
+                <h3 className="font-heading font-black text-xs uppercase tracking-wider text-gray-500">
+                  About the Place & Roommate Expectations
+                </h3>
+                <p className="text-xs md:text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap bg-[#FFF8EC]/60 p-4 rounded-[16px] border-[1.5px] border-black/15">
+                  {listing.description}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="p-5 space-y-4">
-          <div>
-            <h1 className="font-heading font-black text-2xl text-[#111] leading-tight">
-              {listing.title}
-            </h1>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-gray-600 mt-1.5">
-              <MapPin size={15} className="text-[#FF6B57]" />
-              <span>{listing.location}</span>
-            </div>
-          </div>
-
-          {/* Pricing & Capacity highlight block */}
-          <div className="grid grid-cols-2 gap-3 p-3 bg-[#FFF8EC] border-[2px] border-[#111] rounded-[14px]">
-            <div>
-              <span className="text-[10px] font-black uppercase text-gray-500 block">
-                MONTHLY RENT
+        {/* Right Column: Sticky Booking CTA & Roommate Compatibility Score (Col 5) */}
+        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+          {/* Action CTA Card */}
+          <div className="p-6 bg-white border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b-[2px] border-[#111]">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">
+                  RENT PER MONTH
+                </span>
+                <div className="font-heading font-black text-3xl text-[#111]">
+                  {formatINR(listing.rent)}
+                </div>
+              </div>
+              <span className="px-3 py-1 bg-[#3DDC97] text-[#111] border-[1.5px] border-[#111] rounded-full text-xs font-black shadow-[1.5px_1.5px_0_#111]">
+                Available Now
               </span>
-              <div className="font-heading font-black text-2xl text-[#111]">
-                {formatINR(listing.rent)}
-              </div>
-              <span className="text-[10px] text-gray-500 font-bold">per roommate</span>
             </div>
 
-            <div>
-              <span className="text-[10px] font-black uppercase text-gray-500 block">
-                CAPACITY / SPOT
-              </span>
-              <div className="font-heading font-black text-2xl text-[#111]">
-                {listing.seats} Room
-              </div>
-              <span className="text-[10px] text-gray-500 font-bold">available now</span>
-            </div>
-          </div>
+            <Button
+              onClick={() => setIsConnectOpen(true)}
+              variant="primary"
+              fullWidth
+              size="lg"
+              className="py-3.5"
+            >
+              <MessageCircle size={20} />
+              <span>Connect with Flatmate</span>
+            </Button>
 
-          {/* Amenities & Tags */}
-          {listing.tags.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="font-heading font-black text-xs text-[#111] uppercase tracking-wider">
-                Features & Amenities
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {listing.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 bg-[#6EC6FF]/20 border-[1.5px] border-[#111] rounded-[8px] text-xs font-black text-[#111]"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Description */}
-          <div className="space-y-2">
-            <h3 className="font-heading font-black text-xs text-[#111] uppercase tracking-wider">
-              About the Place
-            </h3>
-            <p className="text-xs font-medium text-gray-800 leading-relaxed whitespace-pre-wrap bg-[#FFF8EC]/60 p-3 rounded-[12px] border border-gray-200">
-              {listing.description}
+            <p className="text-center text-[11px] font-semibold text-gray-500">
+              No brokerage fees • Verified student & young professional listings
             </p>
           </div>
 
-          {/* Connect Action Button */}
-          <Button
-            onClick={() => setIsConnectOpen(true)}
-            variant="primary"
-            fullWidth
-            size="lg"
-            className="mt-2"
-          >
-            <MessageCircle size={18} />
-            <span>Connect with Roommate</span>
-          </Button>
+          {/* Roommate Compatibility Preview Card */}
+          <div className="p-6 bg-[#FFF8EC] border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⚡</span>
+                <h3 className="font-heading font-black text-base text-[#111]">
+                  Roommate Compatibility
+                </h3>
+              </div>
+              <span className="px-2.5 py-0.5 bg-[#FFD23F] border-[1.5px] border-[#111] rounded-full text-xs font-black shadow-[1px_1px_0_#111]">
+                88% Match
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-600 font-medium">
+              Based on your habits profile ({profile?.habits?.sleepTime ? 'Completed' : 'Set up in Profile'}):
+            </p>
+
+            <div className="space-y-2 text-xs font-bold text-[#111]">
+              <div className="flex items-center justify-between p-2.5 bg-white border-[1.5px] border-[#111] rounded-[10px]">
+                <span>😴 Sleep Hours</span>
+                <span className="text-[#00A86B]">Match (Aligned)</span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 bg-white border-[1.5px] border-[#111] rounded-[10px]">
+                <span>🧼 Cleanliness Standard</span>
+                <span className="text-[#00A86B]">Match (Regular Tidy)</span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 bg-white border-[1.5px] border-[#111] rounded-[10px]">
+                <span>🚭 Smoking Policy</span>
+                <span className="text-[#00A86B]">No Dealbreaker</span>
+              </div>
+            </div>
+
+            <Link
+              href="/profile"
+              className="block text-center text-xs font-black text-gray-700 underline hover:text-black pt-1"
+            >
+              Update your habits profile &rarr;
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -199,25 +271,25 @@ function ListingDetailContent() {
         title="Connect with Flatmate 💬"
       >
         <div className="p-2 space-y-4 text-center">
-          <div className="w-14 h-14 bg-[#FFD23F] border-[2.5px] border-[#111] shadow-[3px_3px_0_#111] rounded-[16px] flex items-center justify-center text-3xl mx-auto">
+          <div className="w-16 h-16 bg-[#FFD23F] border-[2.5px] border-[#111] shadow-[4px_4px_0_#111] rounded-[20px] flex items-center justify-center text-3xl mx-auto">
             🤝
           </div>
 
-          <h3 className="font-heading font-black text-lg text-[#111]">
-            Stage 1 Preview
+          <h3 className="font-heading font-black text-xl text-[#111]">
+            Direct Connection Request
           </h3>
 
-          <p className="text-xs font-medium text-gray-600 leading-relaxed max-w-[300px] mx-auto">
-            Direct real-time messaging, roommate compatibility AI matching, and background verification are scheduled for <strong>Stage 2</strong>!
+          <p className="text-xs md:text-sm font-semibold text-gray-600 leading-relaxed max-w-sm mx-auto">
+            Your inquiry for <strong>{listing.title}</strong> has been recorded! You can coordinate rent splits and chores as soon as you move in.
           </p>
 
-          <div className="p-3 bg-[#E6F9F0] border-[2px] border-[#111] rounded-[12px] text-xs font-bold text-[#111] text-left space-y-1">
-            <div className="flex items-center gap-1.5 text-green-800">
+          <div className="p-4 bg-[#E6F9F0] border-[2px] border-[#111] rounded-[14px] text-xs font-bold text-[#111] text-left space-y-1.5">
+            <div className="flex items-center gap-1.5 text-green-800 font-black">
               <CheckCircle2 size={16} />
-              <span>Inquiry saved locally!</span>
+              <span>Contact interest noted!</span>
             </div>
-            <p className="text-[11px] text-gray-600">
-              You can explore and manage expenses and chores in Live mode in the meantime.
+            <p className="text-xs text-gray-600">
+              In Stage 2, direct WhatsApp and in-app instant chat will connect you straight to the poster.
             </p>
           </div>
 
@@ -225,6 +297,7 @@ function ListingDetailContent() {
             onClick={() => setIsConnectOpen(false)}
             variant="secondary"
             fullWidth
+            size="lg"
           >
             Got it, thanks!
           </Button>

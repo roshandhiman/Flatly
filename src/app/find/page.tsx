@@ -23,6 +23,8 @@ import {
   Tag,
   Trash2,
   Users,
+  Eye,
+  Lightbulb,
 } from 'lucide-react';
 
 const AVAILABLE_TAGS = [
@@ -117,7 +119,6 @@ function FindPageContent() {
   // Filter listings based on search and selected filter chip
   const filteredListings = useMemo(() => {
     return listings.filter((item) => {
-      // Search query filter (title, location, tags)
       const matchesSearch =
         !searchQuery.trim() ||
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -126,7 +127,6 @@ function FindPageContent() {
 
       if (!matchesSearch) return false;
 
-      // Filter chip filter
       if (activeFilter === 'Under ₹10k') {
         return item.rent <= 10000;
       }
@@ -145,70 +145,74 @@ function FindPageContent() {
   }, [listings, searchQuery, activeFilter]);
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Top Header */}
-      <div>
-        <h1 className="font-heading text-2xl font-black text-[#111]">
-          Find & Post Rooms 🏠
-        </h1>
-        <p className="text-xs font-semibold text-gray-500">
-          Discover verified vacancies or find your next flatmate
-        </p>
-      </div>
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+      {/* Top Header & Mode Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl md:text-3xl font-black text-[#111]">
+            Find & Post Rooms 🏠
+          </h1>
+          <p className="text-xs md:text-sm font-semibold text-gray-600 mt-0.5">
+            Discover verified vacancies with lifestyle compatibility matching
+          </p>
+        </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 p-1.5 bg-white border-[2.5px] border-[#111] rounded-[16px] shadow-[4px_4px_0_#111]">
-        <button
-          onClick={() => setActiveTab('rooms')}
-          className={`flex-1 py-2 rounded-[12px] font-heading font-black text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            activeTab === 'rooms'
-              ? 'bg-[#FFD23F] text-[#111] border-[2px] border-[#111] shadow-[2px_2px_0_#111]'
-              : 'text-gray-500 hover:text-[#111]'
-          }`}
-        >
-          <Search size={16} strokeWidth={2.5} />
-          <span>Find a Room ({listings.length})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('post')}
-          className={`flex-1 py-2 rounded-[12px] font-heading font-black text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            activeTab === 'post'
-              ? 'bg-[#FFD23F] text-[#111] border-[2px] border-[#111] shadow-[2px_2px_0_#111]'
-              : 'text-gray-500 hover:text-[#111]'
-          }`}
-        >
-          <PlusCircle size={16} strokeWidth={2.5} />
-          <span>Post Vacancy</span>
-        </button>
+        {/* Tab Toggle */}
+        <div className="flex gap-2 p-1.5 bg-white border-[2.5px] border-[#111] rounded-[16px] shadow-[4px_4px_0_#111] self-start sm:self-auto">
+          <button
+            onClick={() => setActiveTab('rooms')}
+            className={`px-4 py-2 rounded-[12px] font-heading font-black text-xs md:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'rooms'
+                ? 'bg-[#FFD23F] text-[#111] border-[2px] border-[#111] shadow-[2px_2px_0_#111]'
+                : 'text-gray-500 hover:text-[#111]'
+            }`}
+          >
+            <Search size={16} strokeWidth={2.5} />
+            <span>Browse Rooms ({listings.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('post')}
+            className={`px-4 py-2 rounded-[12px] font-heading font-black text-xs md:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'post'
+                ? 'bg-[#FFD23F] text-[#111] border-[2px] border-[#111] shadow-[2px_2px_0_#111]'
+                : 'text-gray-500 hover:text-[#111]'
+            }`}
+          >
+            <PlusCircle size={16} strokeWidth={2.5} />
+            <span>Post a Vacancy</span>
+          </button>
+        </div>
       </div>
 
       {/* TAB 1: LISTINGS FEED */}
       {activeTab === 'rooms' && (
-        <div className="space-y-3">
-          {/* Search bar */}
-          <div className="relative">
-            <Search
-              size={18}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"
-            />
-            <input
-              placeholder="Search location or area (e.g. Indiranagar, HSR)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border-[2.5px] border-[#111] rounded-[14px] shadow-[3px_3px_0_#111] text-xs font-bold text-[#111] focus:outline-none placeholder:text-gray-400"
-            />
-          </div>
-
-          {/* Filter Chips */}
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {FILTER_CHIPS.map((chip) => (
-              <Chip
-                key={chip}
-                label={chip}
-                selected={activeFilter === chip}
-                onClick={() => setActiveFilter(chip)}
+        <div className="space-y-6">
+          {/* Search bar & Filter row */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            <div className="relative flex-1">
+              <Search
+                size={18}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"
               />
-            ))}
+              <input
+                placeholder="Search by neighborhood, street, or tags (e.g. Indiranagar, HSR, Furnished)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white border-[2.5px] border-[#111] rounded-[14px] shadow-[3px_3px_0_#111] text-xs md:text-sm font-bold text-[#111] focus:outline-none placeholder:text-gray-400"
+              />
+            </div>
+
+            {/* Filter Chips */}
+            <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none items-center">
+              {FILTER_CHIPS.map((chip) => (
+                <Chip
+                  key={chip}
+                  label={chip}
+                  selected={activeFilter === chip}
+                  onClick={() => setActiveFilter(chip)}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Listings count & results */}
@@ -234,86 +238,99 @@ function FindPageContent() {
               />
             )
           ) : (
-            <div className="space-y-4">
+            /* Responsive Grid: 1 col on mobile, 2 cols on tablet, 3 cols on laptop/desktop */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredListings.map((listing) => (
                 <div
                   key={listing.id}
-                  className="bg-white border-[2.5px] border-[#111] rounded-[18px] shadow-[5px_5px_0_#111] overflow-hidden transition-all hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px]"
+                  className="bg-white border-[2.5px] border-[#111] rounded-[20px] shadow-[6px_6px_0_#111] overflow-hidden transition-all hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] flex flex-col justify-between"
                 >
-                  {/* Top image placeholder with neo-brutal pattern */}
-                  <div className="h-32 bg-[#FFD23F]/30 border-b-[2px] border-[#111] flex items-center justify-center relative p-3">
-                    <div className="text-center">
-                      <span className="text-4xl">🏡</span>
-                      <span className="block text-[11px] font-black uppercase text-gray-700 mt-1">
-                        {listing.location}
+                  <div>
+                    {/* Top image placeholder with neo-brutal pattern */}
+                    <div className="h-36 bg-[#FFD23F]/30 border-b-[2.5px] border-[#111] flex items-center justify-center relative p-3">
+                      <div className="text-center">
+                        <span className="text-4xl">🏡</span>
+                        <span className="block text-[11px] font-black uppercase text-gray-700 mt-1">
+                          {listing.location}
+                        </span>
+                      </div>
+
+                      <span className="absolute top-3 right-3 px-3 py-1 bg-white border-[2px] border-[#111] rounded-full text-[11px] font-black shadow-[2px_2px_0_#111]">
+                        {listing.seats} spot{listing.seats > 1 ? 's' : ''} left
                       </span>
                     </div>
 
-                    <span className="absolute top-3 right-3 px-2.5 py-1 bg-white border-[1.5px] border-[#111] rounded-full text-[10px] font-black shadow-[2px_2px_0_#111]">
-                      {listing.seats} spot{listing.seats > 1 ? 's' : ''} left
-                    </span>
+                    {/* Body */}
+                    <div className="p-4 md:p-5 space-y-3">
+                      <div>
+                        <h3 className="font-heading font-black text-lg md:text-xl text-[#111] leading-tight line-clamp-1">
+                          {listing.title}
+                        </h3>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 mt-1">
+                          <MapPin size={14} className="text-[#FF6B57]" />
+                          <span className="truncate">{listing.location}</span>
+                        </div>
+                      </div>
+
+                      {/* Rent & Seats Bar */}
+                      <div className="flex items-center justify-between py-2.5 border-y-[1.5px] border-gray-100">
+                        <div>
+                          <span className="font-heading font-black text-xl md:text-2xl text-[#111]">
+                            {formatINR(listing.rent)}
+                          </span>
+                          <span className="text-xs font-bold text-gray-500">
+                            /month
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-[10px] border-[1.5px] border-[#111]">
+                          <Bed size={14} />
+                          <span>{listing.seats} spot</span>
+                        </div>
+                      </div>
+
+                      {/* Description Snippet */}
+                      <p className="text-xs font-medium text-gray-600 line-clamp-2 leading-relaxed">
+                        {listing.description}
+                      </p>
+
+                      {/* Tags */}
+                      {listing.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {listing.tags.slice(0, 3).map((t) => (
+                            <span
+                              key={t}
+                              className="px-2.5 py-0.5 rounded-[8px] border-[1.5px] border-[#111] text-[10px] font-black bg-[#FFF8EC]"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                          {listing.tags.length > 3 && (
+                            <span className="text-[10px] font-bold text-gray-400 self-center">
+                              +{listing.tags.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Body */}
-                  <div className="p-4 space-y-3">
-                    <div>
-                      <h3 className="font-heading font-black text-lg text-[#111] leading-tight">
-                        {listing.title}
-                      </h3>
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 mt-1">
-                        <MapPin size={13} className="text-[#FF6B57]" />
-                        <span>{listing.location}</span>
-                      </div>
-                    </div>
+                  {/* Actions Bar */}
+                  <div className="p-4 md:p-5 pt-0 flex items-center gap-2">
+                    <Link
+                      href={`/find/${listing.id}`}
+                      className="flex-1 py-2.5 px-4 bg-[#FFD23F] border-[2px] border-[#111] rounded-[12px] shadow-[2.5px_2.5px_0_#111] text-xs font-black text-center hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+                    >
+                      View Full Details &rarr;
+                    </Link>
 
-                    {/* Rent & Seats Bar */}
-                    <div className="flex items-center justify-between py-2 border-y-[1.5px] border-gray-100">
-                      <div>
-                        <span className="font-heading font-black text-xl text-[#111]">
-                          {formatINR(listing.rent)}
-                        </span>
-                        <span className="text-xs font-bold text-gray-500">
-                          /month
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1 text-xs font-bold text-gray-700 bg-gray-100 px-2.5 py-1 rounded-[8px] border border-[#111]">
-                        <Bed size={14} />
-                        <span>{listing.seats} room available</span>
-                      </div>
-                    </div>
-
-                    {/* Tags */}
-                    {listing.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {listing.tags.map((t) => (
-                          <span
-                            key={t}
-                            className="px-2 py-0.5 rounded-[6px] border-[1.5px] border-[#111] text-[10px] font-bold bg-[#FFF8EC]"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 pt-1">
-                      <Link
-                        href={`/find/${listing.id}`}
-                        className="flex-1 py-2 px-3 bg-[#FFD23F] border-[2px] border-[#111] rounded-[10px] shadow-[2px_2px_0_#111] text-xs font-black text-center hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
-                      >
-                        View Full Details &rarr;
-                      </Link>
-
-                      <button
-                        onClick={() => deleteListing(listing.id)}
-                        className="p-2 border-[2px] border-[#111] rounded-[10px] bg-white shadow-[2px_2px_0_#111] text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
-                        title="Delete this listing"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => deleteListing(listing.id)}
+                      className="p-2.5 border-[2px] border-[#111] rounded-[12px] bg-white shadow-[2px_2px_0_#111] text-gray-500 hover:text-red-600 transition-colors cursor-pointer"
+                      title="Delete this listing"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -322,113 +339,176 @@ function FindPageContent() {
         </div>
       )}
 
-      {/* TAB 2: POST A VACANCY FORM */}
+      {/* TAB 2: POST A VACANCY FORM (Responsive 2-Col on Laptop/Tablet) */}
       {activeTab === 'post' && (
-        <Card className="bg-white space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b-[2px] border-[#111]">
-            <div className="w-8 h-8 rounded-[8px] bg-[#FFD23F] border-[2px] border-[#111] flex items-center justify-center font-black">
-              📢
-            </div>
-            <div>
-              <h2 className="font-heading font-black text-base text-[#111]">
-                Post a Room or Vacancy
-              </h2>
-              <p className="text-[11px] font-semibold text-gray-500">
-                Created listings will appear instantly in the feed
-              </p>
-            </div>
-          </div>
-
-          {createdSuccess && (
-            <div className="p-3 bg-[#3DDC97] border-[2px] border-[#111] rounded-[10px] text-xs font-black text-[#111] flex items-center gap-1.5">
-              <Check size={16} strokeWidth={3} />
-              <span>Listing posted successfully! Switching to feed...</span>
-            </div>
-          )}
-
-          <form onSubmit={handlePostSubmit} className="space-y-4">
-            <Input
-              label="Listing Headline"
-              placeholder="e.g. Cozy Sunny Room in Indiranagar 1BHK/3BHK"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                if (errors.title) setErrors({ ...errors, title: '' });
-              }}
-              error={errors.title}
-            />
-
-            <Input
-              label="Area / Neighborhood"
-              placeholder="e.g. Indiranagar 100ft Road, Bangalore"
-              value={location}
-              onChange={(e) => {
-                setLocation(e.target.value);
-                if (errors.location) setErrors({ ...errors, location: '' });
-              }}
-              error={errors.location}
-            />
-
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Monthly Rent (₹)"
-                placeholder="e.g. 14500"
-                type="number"
-                value={rent}
-                onChange={(e) => {
-                  setRent(e.target.value);
-                  if (errors.rent) setErrors({ ...errors, rent: '' });
-                }}
-                error={errors.rent}
-              />
-
-              <Input
-                label="Spots Available"
-                placeholder="e.g. 1"
-                type="number"
-                value={seats}
-                onChange={(e) => {
-                  setSeats(e.target.value);
-                  if (errors.seats) setErrors({ ...errors, seats: '' });
-                }}
-                error={errors.seats}
-              />
-            </div>
-
-            <TextArea
-              label="Description & Roommate Vibe"
-              placeholder="Tell about the flat, amenities, nearby metro, and what kind of flatmate you're looking for."
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                if (errors.description) setErrors({ ...errors, description: '' });
-              }}
-              error={errors.description}
-            />
-
-            {/* Selectable Amenities Tags */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-[#111]">
-                Tags & Amenities (Tap to select)
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {AVAILABLE_TAGS.map((t) => (
-                  <Chip
-                    key={t}
-                    label={t}
-                    selected={selectedTags.includes(t)}
-                    onClick={() => toggleTag(t)}
-                  />
-                ))}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Form (Col 7) */}
+          <Card className="lg:col-span-7 bg-white p-5 md:p-7 space-y-5">
+            <div className="flex items-center gap-2.5 pb-3 border-b-[2px] border-[#111]">
+              <div className="w-10 h-10 rounded-[12px] bg-[#FFD23F] border-[2px] border-[#111] flex items-center justify-center font-black text-xl shadow-[2px_2px_0_#111]">
+                📢
+              </div>
+              <div>
+                <h2 className="font-heading font-black text-lg md:text-xl text-[#111]">
+                  Post a Room or Vacancy
+                </h2>
+                <p className="text-xs font-semibold text-gray-500">
+                  Your listing will be published immediately for seekers to view and calculate compatibility
+                </p>
               </div>
             </div>
 
-            <Button type="submit" variant="primary" fullWidth size="lg">
-              <Sparkles size={18} />
-              <span>Publish Listing</span>
-            </Button>
-          </form>
-        </Card>
+            {createdSuccess && (
+              <div className="p-3.5 bg-[#3DDC97] border-[2px] border-[#111] rounded-[12px] text-xs font-black text-[#111] flex items-center gap-2 shadow-[2px_2px_0_#111]">
+                <Check size={18} strokeWidth={3} />
+                <span>Listing posted successfully! Switching to feed...</span>
+              </div>
+            )}
+
+            <form onSubmit={handlePostSubmit} className="space-y-4">
+              <Input
+                label="Listing Headline"
+                placeholder="e.g. Cozy Master Bedroom with Balcony in Indiranagar 3BHK"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (errors.title) setErrors({ ...errors, title: '' });
+                }}
+                error={errors.title}
+              />
+
+              <Input
+                label="Area / Locality & City"
+                placeholder="e.g. Indiranagar 100ft Road, Bangalore"
+                value={location}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  if (errors.location) setErrors({ ...errors, location: '' });
+                }}
+                error={errors.location}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  label="Monthly Rent (₹)"
+                  placeholder="e.g. 16500"
+                  type="number"
+                  value={rent}
+                  onChange={(e) => {
+                    setRent(e.target.value);
+                    if (errors.rent) setErrors({ ...errors, rent: '' });
+                  }}
+                  error={errors.rent}
+                />
+
+                <Input
+                  label="Spots Available"
+                  placeholder="e.g. 1"
+                  type="number"
+                  value={seats}
+                  onChange={(e) => {
+                    setSeats(e.target.value);
+                    if (errors.seats) setErrors({ ...errors, seats: '' });
+                  }}
+                  error={errors.seats}
+                />
+              </div>
+
+              <TextArea
+                label="Description & Roommate Expectations"
+                placeholder="Share details about the room, attached washroom, electricity/wifi sharing, quiet hours, and what kind of flatmate you're looking for."
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  if (errors.description) setErrors({ ...errors, description: '' });
+                }}
+                error={errors.description}
+              />
+
+              {/* Selectable Amenities Tags */}
+              <div className="space-y-2">
+                <label className="block text-sm font-black text-[#111]">
+                  Tags & Amenities (Click to select)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {AVAILABLE_TAGS.map((t) => (
+                    <Chip
+                      key={t}
+                      label={t}
+                      selected={selectedTags.includes(t)}
+                      onClick={() => toggleTag(t)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <Button type="submit" variant="primary" fullWidth size="lg">
+                <Sparkles size={18} />
+                <span>Publish Listing Now</span>
+              </Button>
+            </form>
+          </Card>
+
+          {/* Right Live Preview & Pro-tips (Col 5) */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="p-5 bg-white border-[2.5px] border-[#111] rounded-[20px] shadow-[5px_5px_0_#111]">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b-[2px] border-[#111]">
+                <Eye size={18} className="text-[#111]" />
+                <h3 className="font-heading font-black text-sm md:text-base text-[#111]">
+                  Live Preview
+                </h3>
+              </div>
+
+              {/* Preview Card */}
+              <div className="bg-[#FFF8EC] border-[2px] border-[#111] rounded-[16px] overflow-hidden shadow-[3px_3px_0_#111]">
+                <div className="h-28 bg-[#FFD23F]/40 border-b-[2px] border-[#111] flex items-center justify-center relative p-3 text-center">
+                  <span className="text-3xl">🏡</span>
+                  <span className="absolute top-2 right-2 px-2.5 py-0.5 bg-white border-[1.5px] border-[#111] rounded-full text-[10px] font-black">
+                    {seats || '1'} spot available
+                  </span>
+                </div>
+                <div className="p-4 space-y-2">
+                  <span className="text-lg font-heading font-black text-[#111]">
+                    {title.trim() || 'Your Room Title Here'}
+                  </span>
+                  <p className="text-xs font-semibold text-gray-500">
+                    📍 {location.trim() || 'Area, City'}
+                  </p>
+                  <p className="text-base font-black text-[#111] py-1 border-y border-black/10">
+                    {rent ? formatINR(parseFloat(rent) || 0) : '₹0'}/month
+                  </p>
+                  <p className="text-xs text-gray-600 line-clamp-2">
+                    {description.trim() || 'Your room description will appear here...'}
+                  </p>
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {selectedTags.map((t) => (
+                        <span key={t} className="px-2 py-0.5 text-[10px] font-black bg-white border border-[#111] rounded-md">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Pro Tips Card */}
+            <div className="p-5 bg-[#6EC6FF] border-[2.5px] border-[#111] rounded-[20px] shadow-[5px_5px_0_#111] space-y-2.5 text-[#111]">
+              <div className="flex items-center gap-2">
+                <Lightbulb size={20} />
+                <h4 className="font-heading font-black text-sm md:text-base">
+                  Indian Roommate Matching Tips
+                </h4>
+              </div>
+              <ul className="text-xs font-semibold space-y-2 pl-4 list-disc leading-relaxed">
+                <li>Mention food preferences (Veg/Non-veg/Eggetarian) to avoid surprises.</li>
+                <li>State deposit amount and lock-in period clearly upfront.</li>
+                <li>Add tags like Wi-Fi, Attached Washroom, and No Curfew for 3x higher inquiries.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -441,4 +521,3 @@ export default function FindPage() {
     </Suspense>
   );
 }
-

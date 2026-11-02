@@ -26,7 +26,7 @@ export function BottomTabBar() {
   };
 
   return (
-    <nav className="sticky bottom-0 z-40 bg-[#FFF8EC] border-t-[2.5px] border-[#111] px-3 py-2">
+    <nav className="md:hidden sticky bottom-0 z-40 bg-[#FFF8EC] border-t-[2.5px] border-[#111] px-3 py-2">
       <div className="flex items-center justify-around gap-1">
         {TABS.map((tab) => {
           const active = isActive(tab.href);
@@ -53,4 +53,3 @@ export function BottomTabBar() {
     </nav>
   );
 }
-

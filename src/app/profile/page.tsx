@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Chip } from '@/components/ui/Chip';
 import { Card } from '@/components/ui/Card';
-import { Check, RotateCcw, Save, Sparkles, User } from 'lucide-react';
+import { Avatar } from '@/components/ui/Avatar';
+import { Check, RotateCcw, Save, Sparkles, User, ShieldCheck, Heart, LogIn } from 'lucide-react';
 
 const SLEEP_OPTIONS = [
   'Early bird (Before 11 PM)',
@@ -100,191 +101,253 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="p-4 space-y-5">
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-black text-[#111]">
-            Profile & Habits
+          <h1 className="font-heading text-2xl md:text-3xl font-black text-[#111]">
+            Profile & Habits 👤
           </h1>
-          <p className="text-xs font-semibold text-gray-500">
-            Tell roommates how you like to live
+          <p className="text-xs md:text-sm font-semibold text-gray-500 mt-0.5">
+            Set your living habits so roommate matching can calculate compatibility accurately
           </p>
         </div>
 
-        <div className="w-10 h-10 rounded-full bg-[#FFD23F] border-[2.5px] border-[#111] shadow-[2px_2px_0_#111] flex items-center justify-center font-black text-sm">
-          {name ? name.slice(0, 2).toUpperCase() : 'ME'}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#FFD23F] border-[2px] border-[#111] rounded-full shadow-[2px_2px_0_#111] text-xs font-black hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+          >
+            <LogIn size={14} />
+            <span>Login / Account</span>
+          </Link>
         </div>
       </div>
 
       {savedToast && (
-        <div className="p-3 bg-[#3DDC97] border-[2.5px] border-[#111] rounded-[12px] shadow-[3px_3px_0_#111] flex items-center gap-2 text-sm font-bold text-[#111] animate-slide-up">
-          <Check size={18} strokeWidth={3} />
+        <div className="p-3.5 bg-[#3DDC97] border-[2.5px] border-[#111] rounded-[16px] shadow-[4px_4px_0_#111] flex items-center gap-2 text-sm font-black text-[#111] animate-slide-up">
+          <Check size={20} strokeWidth={3} />
           <span>Profile saved locally! Mast kaam.</span>
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-5">
-        {/* Supabase Auth Banner */}
-        <Link
-          href="/login"
-          className="flex items-center justify-between p-3.5 bg-[#FFD23F] border-[2.5px] border-[#111] rounded-[16px] shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">🔐</span>
+      {/* Responsive 2-Col Layout on Tablet & Desktop */}
+      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Section: User Card & Habits Persona (Col 5) */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Supabase Auth Banner */}
+          <Link
+            href="/login"
+            className="flex items-center justify-between p-4 bg-[#FFD23F] border-[2.5px] border-[#111] rounded-[20px] shadow-[5px_5px_0_#111] hover:shadow-[2px_2px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] transition-all block"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔐</span>
+              <div>
+                <div className="font-heading font-black text-sm md:text-base text-[#111]">
+                  Login / Cloud Account
+                </div>
+                <div className="text-xs font-bold text-gray-800">
+                  Sign in with Phone OTP, Email, or Google
+                </div>
+              </div>
+            </div>
+            <span className="text-xs font-black px-3 py-1 bg-white border-[1.5px] border-[#111] rounded-[10px]">
+              Open &rarr;
+            </span>
+          </Link>
+
+          {/* Identity Card */}
+          <div className="p-6 bg-white border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-4 text-center">
+            <div className="w-20 h-20 rounded-full bg-[#FFD23F] border-[3px] border-[#111] shadow-[4px_4px_0_#111] flex items-center justify-center font-heading font-black text-2xl text-[#111] mx-auto">
+              {name ? name.slice(0, 2).toUpperCase() : 'ME'}
+            </div>
+
             <div>
-              <div className="font-heading font-black text-sm text-[#111]">
-                Login / Supabase Account
+              <h2 className="font-heading font-black text-xl md:text-2xl text-[#111]">
+                {name || 'Your Name'}
+              </h2>
+              <p className="text-xs font-semibold text-gray-500 mt-0.5">
+                Roommate Seeker & Co-liver
+              </p>
+            </div>
+
+            {flat && (
+              <div className="p-3 bg-[#FFF8EC] border-[2px] border-[#111] rounded-[14px] text-xs font-bold flex items-center justify-between text-left">
+                <span className="text-gray-600">Active Flat:</span>
+                <span className="text-[#111] font-black">{flat.name} ({flat.members.length} members)</span>
               </div>
-              <div className="text-[11px] font-bold text-gray-800">
-                Sign in with Phone OTP, Email, or Google
+            )}
+          </div>
+
+          {/* Living Persona Highlights */}
+          <div className="p-6 bg-[#6EC6FF]/20 border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b-[2px] border-[#111]">
+              <Sparkles size={18} />
+              <h3 className="font-heading font-black text-sm md:text-base text-[#111]">
+                Your Compatibility Blueprint
+              </h3>
+            </div>
+
+            <p className="text-xs text-gray-700 font-medium leading-relaxed">
+              These factors are used by Flatly&apos;s deterministic algorithm to score compatibility (0–100) with dealbreaker protection:
+            </p>
+
+            <div className="space-y-2 text-xs font-bold text-[#111]">
+              <div className="p-2.5 bg-white border border-[#111] rounded-[10px] flex items-center justify-between">
+                <span>😴 Schedule</span>
+                <span className="font-black text-gray-700">{sleepTime.split('(')[0]}</span>
+              </div>
+              <div className="p-2.5 bg-white border border-[#111] rounded-[10px] flex items-center justify-between">
+                <span>🧹 Cleanliness</span>
+                <span className="font-black text-gray-700">{cleanliness}</span>
+              </div>
+              <div className="p-2.5 bg-white border border-[#111] rounded-[10px] flex items-center justify-between">
+                <span>🍲 Food</span>
+                <span className="font-black text-gray-700">{foodPreference}</span>
+              </div>
+              <div className="p-2.5 bg-white border border-[#111] rounded-[10px] flex items-center justify-between">
+                <span>🚭 Smoking</span>
+                <span className="font-black text-gray-700">{smoking}</span>
               </div>
             </div>
           </div>
-          <span className="text-xs font-black px-2.5 py-1 bg-white border-[1.5px] border-[#111] rounded-[8px]">
-            Open &rarr;
-          </span>
-        </Link>
 
-        {/* Basic Details */}
-        <Card className="bg-white space-y-3">
-          <h2 className="font-heading font-black text-sm text-[#111] uppercase tracking-wide">
-            Personal Info
-          </h2>
+          {/* Danger Zone: Reset Data */}
+          <div className="p-4 bg-white border-[2px] border-dashed border-red-300 rounded-[16px] text-center">
+            <button
+              type="button"
+              onClick={handleResetData}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-800 transition-colors cursor-pointer"
+            >
+              <RotateCcw size={14} />
+              <span>Reset All Local Storage Data (Testing)</span>
+            </button>
+          </div>
+        </div>
 
-          <Input
-            label="Your Display Name"
-            placeholder="e.g. Rahul Sharma"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (nameError) setNameError('');
-            }}
-            error={nameError}
-          />
-
-          {flat && (
-            <div className="p-2.5 bg-yellow-50 border-[2px] border-[#111] rounded-[10px] text-xs font-bold flex items-center justify-between">
-              <span className="text-gray-700">Current Flat:</span>
-              <span className="text-[#111] font-black">{flat.name} ({flat.members.length} members)</span>
-            </div>
-          )}
-        </Card>
-
-        {/* Habits Section */}
-        <Card className="bg-white space-y-4">
-          <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-[#FFD23F]" />
-            <h2 className="font-heading font-black text-sm text-[#111] uppercase tracking-wide">
-              Living Habits & Preferences
+        {/* Right Section: Habits Selection Form (Col 7) */}
+        <div className="lg:col-span-7 space-y-6">
+          <Card className="bg-white p-5 md:p-7 space-y-5">
+            <h2 className="font-heading font-black text-base md:text-lg text-[#111] uppercase tracking-wide pb-2 border-b-[2px] border-[#111]">
+              Personal Information
             </h2>
-          </div>
 
-          {/* Sleep schedule */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-gray-700">
-              🌙 Sleep Schedule
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {SLEEP_OPTIONS.map((opt) => (
-                <Chip
-                  key={opt}
-                  label={opt}
-                  selected={sleepTime === opt}
-                  onClick={() => setSleepTime(opt)}
-                />
-              ))}
+            <Input
+              label="Your Display Name"
+              placeholder="e.g. Rahul Sharma"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError) setNameError('');
+              }}
+              error={nameError}
+            />
+          </Card>
+
+          {/* Habits Section */}
+          <Card className="bg-white p-5 md:p-7 space-y-5">
+            <div className="flex items-center gap-2 pb-2 border-b-[2px] border-[#111]">
+              <Sparkles size={18} className="text-[#FFD23F]" />
+              <h2 className="font-heading font-black text-base md:text-lg text-[#111] uppercase tracking-wide">
+                Living Habits & Preferences
+              </h2>
             </div>
-          </div>
 
-          {/* Cleanliness */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-gray-700">
-              🧹 Cleanliness & Tidiness
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {CLEANLINESS_OPTIONS.map((opt) => (
-                <Chip
-                  key={opt}
-                  label={opt}
-                  selected={cleanliness === opt}
-                  onClick={() => setCleanliness(opt)}
-                />
-              ))}
+            {/* Sleep schedule */}
+            <div className="space-y-2">
+              <label className="block text-xs md:text-sm font-black text-[#111]">
+                🌙 Sleep Schedule
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {SLEEP_OPTIONS.map((opt) => (
+                  <Chip
+                    key={opt}
+                    label={opt}
+                    selected={sleepTime === opt}
+                    onClick={() => setSleepTime(opt)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Guests */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-gray-700">
-              👥 Guest Policy
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {GUESTS_OPTIONS.map((opt) => (
-                <Chip
-                  key={opt}
-                  label={opt}
-                  selected={guests === opt}
-                  onClick={() => setGuests(opt)}
-                />
-              ))}
+            {/* Cleanliness */}
+            <div className="space-y-2">
+              <label className="block text-xs md:text-sm font-black text-[#111]">
+                🧹 Cleanliness & Tidiness
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CLEANLINESS_OPTIONS.map((opt) => (
+                  <Chip
+                    key={opt}
+                    label={opt}
+                    selected={cleanliness === opt}
+                    onClick={() => setCleanliness(opt)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Food */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-gray-700">
-              🍲 Food Preference
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {FOOD_OPTIONS.map((opt) => (
-                <Chip
-                  key={opt}
-                  label={opt}
-                  selected={foodPreference === opt}
-                  onClick={() => setFoodPreference(opt)}
-                />
-              ))}
+            {/* Guests */}
+            <div className="space-y-2">
+              <label className="block text-xs md:text-sm font-black text-[#111]">
+                👥 Guest Policy
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {GUESTS_OPTIONS.map((opt) => (
+                  <Chip
+                    key={opt}
+                    label={opt}
+                    selected={guests === opt}
+                    onClick={() => setGuests(opt)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Smoking */}
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-gray-700">
-              🚭 Smoking & Lifestyle
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {SMOKING_OPTIONS.map((opt) => (
-                <Chip
-                  key={opt}
-                  label={opt}
-                  selected={smoking === opt}
-                  onClick={() => setSmoking(opt)}
-                />
-              ))}
+            {/* Food */}
+            <div className="space-y-2">
+              <label className="block text-xs md:text-sm font-black text-[#111]">
+                🍲 Food Preference
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {FOOD_OPTIONS.map((opt) => (
+                  <Chip
+                    key={opt}
+                    label={opt}
+                    selected={foodPreference === opt}
+                    onClick={() => setFoodPreference(opt)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        </Card>
 
-        {/* Action Buttons */}
-        <Button type="submit" variant="primary" fullWidth size="lg">
-          <Save size={18} />
-          <span>Save Changes</span>
-        </Button>
+            {/* Smoking */}
+            <div className="space-y-2">
+              <label className="block text-xs md:text-sm font-black text-[#111]">
+                🚭 Smoking & Lifestyle
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {SMOKING_OPTIONS.map((opt) => (
+                  <Chip
+                    key={opt}
+                    label={opt}
+                    selected={smoking === opt}
+                    onClick={() => setSmoking(opt)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Save CTA */}
+            <div className="pt-2">
+              <Button type="submit" variant="primary" fullWidth size="lg">
+                <Save size={18} />
+                <span>Save Profile Changes</span>
+              </Button>
+            </div>
+          </Card>
+        </div>
       </form>
-
-      {/* Danger Zone: Clear all local storage */}
-      <div className="pt-4 border-t-[2px] border-dashed border-gray-300 text-center">
-        <button
-          type="button"
-          onClick={handleResetData}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-800 transition-colors cursor-pointer"
-        >
-          <RotateCcw size={14} />
-          <span>Reset All Local Data (Testing)</span>
-        </button>
-      </div>
     </div>
   );
 }
-

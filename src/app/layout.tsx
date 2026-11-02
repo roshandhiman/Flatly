@@ -31,17 +31,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable}`}>
-      <body className="min-h-screen bg-[#F0EBE1] flex justify-center items-start sm:py-6">
+      <body className="min-h-screen bg-[#F0EBE1] flex justify-center items-start md:p-6 lg:p-8">
         <StoreProvider>
-          {/* 430px Phone Container */}
-          <div className="w-full sm:max-w-[430px] min-h-screen sm:min-h-[860px] sm:max-h-[920px] bg-[#FFF8EC] sm:border-[3px] border-[#111] sm:rounded-[32px] sm:shadow-[8px_8px_0_#111] flex flex-col overflow-hidden relative">
-            <Suspense fallback={<div className="h-14 bg-[#FFF8EC] border-b-[2.5px] border-[#111]" />}>
+          {/* Responsive Shell: Native phone on mobile (<md), elegant wide dashboard on tablets & laptops (md+) */}
+          <div className="w-full md:max-w-5xl lg:max-w-6xl xl:max-w-7xl min-h-screen md:min-h-[calc(100vh-4rem)] bg-[#FFF8EC] md:border-[3.5px] border-[#111] md:rounded-[32px] md:shadow-[12px_12px_0_#111] flex flex-col overflow-hidden relative transition-all duration-200">
+            <Suspense fallback={<div className="h-16 bg-[#FFF8EC] border-b-[2.5px] border-[#111]" />}>
               <AppHeader />
             </Suspense>
-            <main className="flex-1 overflow-y-auto pb-6">
+            <main className="flex-1 overflow-y-auto pb-24 md:pb-10">
               {children}
             </main>
-            <Suspense fallback={<div className="h-14 bg-[#FFF8EC] border-t-[2.5px] border-[#111]" />}>
+            <Suspense fallback={<div className="h-14 bg-[#FFF8EC] border-t-[2.5px] border-[#111] md:hidden" />}>
               <BottomTabBar />
             </Suspense>
             <FirstRunModal />
