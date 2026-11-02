@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -124,6 +125,27 @@ export default function ProfilePage() {
       )}
 
       <form onSubmit={handleSave} className="space-y-5">
+        {/* Supabase Auth Banner */}
+        <Link
+          href="/login"
+          className="flex items-center justify-between p-3.5 bg-[#FFD23F] border-[2.5px] border-[#111] rounded-[16px] shadow-[4px_4px_0_#111] hover:shadow-[2px_2px_0_#111] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">🔐</span>
+            <div>
+              <div className="font-heading font-black text-sm text-[#111]">
+                Login / Supabase Account
+              </div>
+              <div className="text-[11px] font-bold text-gray-800">
+                Sign in with Phone OTP, Email, or Google
+              </div>
+            </div>
+          </div>
+          <span className="text-xs font-black px-2.5 py-1 bg-white border-[1.5px] border-[#111] rounded-[8px]">
+            Open &rarr;
+          </span>
+        </Link>
+
         {/* Basic Details */}
         <Card className="bg-white space-y-3">
           <h2 className="font-heading font-black text-sm text-[#111] uppercase tracking-wide">

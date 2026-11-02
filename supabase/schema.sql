@@ -200,3 +200,4 @@ create policy "Rules accessible by all" on public.rules for all using (true);
 create policy "Listings are viewable by everyone" on public.listings for select using (true);
 create policy "Anyone can insert listings" on public.listings for insert with check (true);
 create policy "Anyone can delete listings" on public.listings for delete using (true);
+
