@@ -67,6 +67,14 @@ export interface Listing {
   createdAt: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  flatId: string;
+  senderName: string;
+  text: string;
+  createdAt: string;
+}
+
 export interface UserProfile {
   name: string;
   habits: {

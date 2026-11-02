@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 export default function ExpensesPage() {
-  const { flat, expenses, settlements, addExpense, deleteExpense, addSettlement } = useStore();
+  const { flat, expenses, settlements, addExpense, deleteExpense, addSettlement, isHydrated } = useStore();
   const [activeTab, setActiveTab] = useState<'expenses' | 'balances'>('expenses');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -97,6 +97,15 @@ export default function ExpensesPage() {
 
   // Total monthly spend
   const totalSpend = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+  // If not hydrated yet
+  if (!isHydrated) {
+    return (
+      <div className="p-8 text-center font-heading font-black text-sm text-[#111]">
+        Loading your pad hisab... 💸
+      </div>
+    );
+  }
 
   // If no flat yet
   if (!flat) {

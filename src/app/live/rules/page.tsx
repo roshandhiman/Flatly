@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 
 export default function RulesPage() {
-  const { flat, rules, addRule, deleteRule, toggleRuleAgreement, profile } =
+  const { flat, rules, addRule, deleteRule, toggleRuleAgreement, profile, isHydrated } =
     useStore();
 
   const [ruleText, setRuleText] = useState('');
@@ -54,6 +54,14 @@ export default function RulesPage() {
     setSuccessNote(true);
     setTimeout(() => setSuccessNote(false), 2000);
   };
+
+  if (!isHydrated) {
+    return (
+      <div className="p-8 text-center font-heading font-black text-sm text-[#111]">
+        Loading your house rules... 📜
+      </div>
+    );
+  }
 
   if (!flat) {
     return (

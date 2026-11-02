@@ -25,7 +25,9 @@ import {
   Building2,
   ShieldCheck,
   RotateCw,
-  Bot
+  Bot,
+  MessageSquare,
+  AlertCircle
 } from 'lucide-react';
 
 export default function LiveDashboardPage() {
@@ -36,68 +38,78 @@ export default function LiveDashboardPage() {
     joinFlat,
     addMember,
     removeMember,
+    leaveFlat,
     expenses,
     chores,
     rules,
     profile,
+    isHydrated,
   } = useStore();
 
   // Create Flat Form state
   const [flatName, setFlatName] = useState('');
   const [rent, setRent] = useState('');
   const [createError, setCreateError] = useState('');
+  const [creating, setCreating] = useState(false);
 
   // Join Flat Form state
   const [joinCode, setJoinCode] = useState('');
-  const [joinNote, setJoinNote] = useState(false);
+  const [joinError, setJoinError] = useState('');
+  const [joining, setJoining] = useState(false);
 
   // Add Member state
   const [newMemberName, setNewMemberName] = useState('');
   const [memberError, setMemberError] = useState('');
+  const [addingMember, setAddingMember] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
   // Handle Create Flat
-  const handleCreateFlat = (e: React.FormEvent) => {
+  const handleCreateFlat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!flatName.trim()) {
       setCreateError('Please enter a flat name');
       return;
     }
+    setCreateError('');
+    setCreating(true);
 
     const rentNumber = parseFloat(rent) || 0;
-    createFlat(flatName.trim(), rentNumber);
-
-    // If user profile exists, automatically add them as the first member
-    if (profile?.name) {
-      setTimeout(() => {
-        addMember(`${profile.name} (You)`);
-      }, 50);
-    }
+    const creator = profile?.name ? `${profile.name} (Admin)` : 'Me (Admin)';
+    await createFlat(flatName.trim(), rentNumber, creator);
+    setCreating(false);
   };
 
   // Handle Join Flat
-  const handleJoinFlat = (e: React.FormEvent) => {
+  const handleJoinFlat = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!joinCode.trim()) return;
-    joinFlat(joinCode.trim().toUpperCase());
-    setJoinNote(true);
-    if (profile?.name) {
-      setTimeout(() => {
-        addMember(`${profile.name} (You)`);
-      }, 50);
+    if (!joinCode.trim()) {
+      setJoinError('Enter a 6-character invite code');
+      return;
+    }
+    setJoinError('');
+    setJoining(true);
+
+    const userName = profile?.name ? `${profile.name} (You)` : 'New Flatmate';
+    const res = await joinFlat(joinCode.trim().toUpperCase(), userName);
+    setJoining(false);
+
+    if (!res.success) {
+      setJoinError(res.error || 'Could not find flat with this code.');
     }
   };
 
   // Handle Add Member
-  const handleAddMember = (e: React.FormEvent) => {
+  const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMemberName.trim()) {
       setMemberError('Enter a roommate name');
       return;
     }
-    addMember(newMemberName.trim());
-    setNewMemberName('');
     setMemberError('');
+    setAddingMember(true);
+    await addMember(newMemberName.trim());
+    setAddingMember(false);
+    setNewMemberName('');
   };
 
   const copyCodeToClipboard = () => {
@@ -108,6 +120,14 @@ export default function LiveDashboardPage() {
     }
   };
 
+  if (!isHydrated) {
+    return (
+      <div className="p-8 text-center font-heading font-black text-sm text-[#111]">
+        Loading your flat dashboard... 🏠
+      </div>
+    );
+  }
+
   // 1. NO FLAT CREATED YET
   if (!flat) {
     return (
@@ -117,7 +137,7 @@ export default function LiveDashboardPage() {
             Live Flat Mode 🏠
           </h1>
           <p className="text-xs md:text-sm font-semibold text-gray-500 mt-1">
-            Set up your shared flat or enter an invite code to manage hisab, chores, and house rules
+            Set up your shared flat or enter an invite code to sync hisab, chores, and flat chat
           </p>
         </div>
 
@@ -134,15 +154,15 @@ export default function LiveDashboardPage() {
                   Create a new flat
                 </h2>
                 <p className="text-xs font-semibold text-gray-500">
-                  You&apos;ll get a 6-char code to invite roommates
+                  Generates an invite code and syncs your group on cloud
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleCreateFlat} className="space-y-4">
               <Input
-                label="Flat Name / Nickname"
-                placeholder="e.g. Koramangala 3BHK Chill Pad"
+                label="Flat / Apartment Name"
+                placeholder="e.g. Koramangala 3BHK, Sunlight Pad"
                 value={flatName}
                 onChange={(e) => {
                   setFlatName(e.target.value);
@@ -152,30 +172,30 @@ export default function LiveDashboardPage() {
               />
 
               <Input
-                label="Monthly Total Rent (Optional)"
-                placeholder="e.g. 45000"
+                label="Total Monthly Rent (₹)"
+                placeholder="e.g. 25000"
                 type="number"
                 value={rent}
                 onChange={(e) => setRent(e.target.value)}
               />
 
-              <Button type="submit" variant="primary" fullWidth size="lg">
-                <span>Create Flat Now</span>
+              <Button type="submit" variant="primary" fullWidth size="lg" disabled={creating}>
+                <span>{creating ? 'Creating on Cloud...' : 'Create Flat & Invite Roommates'}</span>
                 <ArrowRight size={18} />
               </Button>
             </form>
           </Card>
 
-          {/* Join Flat With Code */}
-          <div className="space-y-5">
-            <Card className="bg-[#FFF8EC] border-[2.5px] border-[#111] p-5 md:p-6 space-y-4 shadow-[5px_5px_0_#111]">
+          {/* Join Flat with Code */}
+          <div className="space-y-4">
+            <Card className="bg-white p-5 md:p-6 space-y-4">
               <div className="flex items-center gap-2.5 pb-2 border-b-[2px] border-[#111]">
-                <div className="w-10 h-10 rounded-[12px] bg-[#6EC6FF] border-[2px] border-[#111] flex items-center justify-center font-black text-xl shadow-[2px_2px_0_#111]">
+                <div className="w-10 h-10 rounded-[12px] bg-[#3DDC97] border-[2px] border-[#111] flex items-center justify-center font-black text-xl shadow-[2px_2px_0_#111]">
                   🔑
                 </div>
                 <div>
                   <h2 className="font-heading font-black text-lg text-[#111]">
-                    Join with invite code
+                    Join with Invite Code
                   </h2>
                   <p className="text-xs font-semibold text-gray-500">
                     Got a 6-character code from your flatmate?
@@ -187,11 +207,15 @@ export default function LiveDashboardPage() {
                 <Input
                   placeholder="Enter 6-char code (e.g. IND404)"
                   value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  onChange={(e) => {
+                    setJoinCode(e.target.value.toUpperCase());
+                    if (joinError) setJoinError('');
+                  }}
+                  error={joinError}
                 />
 
-                <Button type="submit" variant="secondary" fullWidth size="lg">
-                  <span>Join Flat</span>
+                <Button type="submit" variant="secondary" fullWidth size="lg" disabled={joining}>
+                  <span>{joining ? 'Connecting to Flat...' : 'Join Flat'}</span>
                   <ArrowRight size={18} />
                 </Button>
               </form>
@@ -199,7 +223,7 @@ export default function LiveDashboardPage() {
               <div className="p-3 bg-white border-[1.5px] border-[#111] rounded-[12px] text-xs text-gray-700 flex items-start gap-2 shadow-[2px_2px_0_#111]">
                 <Info size={16} className="mt-0.5 text-blue-600 flex-shrink-0" />
                 <span className="leading-snug">
-                  <strong>Flatly Sync:</strong> Entering the invite code connects your habits profile and links you to the flat hisab immediately.
+                  <strong>Live Sync:</strong> Joining connects you to the shared pad, synchronizing expenses, chores, and the flat group chat.
                 </span>
               </div>
             </Card>
@@ -209,9 +233,10 @@ export default function LiveDashboardPage() {
                 What you get with Flatly Live:
               </h4>
               <ul className="text-xs font-semibold text-gray-600 space-y-1.5 list-disc pl-4">
-                <li>Automated fair expense split & debt minimization algorithm.</li>
+                <li>Automated fair expense split & zero-loss debt minimization algorithm.</li>
                 <li>Weekly circular chores rotation so nobody does dishes twice.</li>
-                <li>Democratic house rules with member vote approvals.</li>
+                <li>Democratic house rules with member agreement approvals.</li>
+                <li>Shared flat group chat for daily discussions.</li>
               </ul>
             </div>
           </div>
@@ -246,38 +271,52 @@ export default function LiveDashboardPage() {
           )}
         </div>
 
-        {/* Invite Code Box */}
-        <div className="flex items-center gap-2 p-2.5 bg-white border-[2px] border-[#111] rounded-[16px] shadow-[3px_3px_0_#111] self-start md:self-auto">
-          <div className="px-2">
-            <span className="text-[10px] font-black uppercase text-gray-400 block">
-              INVITE CODE
-            </span>
-            <code className="font-mono font-black text-lg tracking-wider text-[#111]">
-              {flat.code}
-            </code>
+        {/* Invite Code Box & Actions */}
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+          <div className="flex items-center gap-2 p-2.5 bg-white border-[2px] border-[#111] rounded-[16px] shadow-[3px_3px_0_#111]">
+            <div className="px-2">
+              <span className="text-[10px] font-black uppercase text-gray-400 block">
+                INVITE CODE
+              </span>
+              <code className="font-mono font-black text-lg tracking-wider text-[#111]">
+                {flat.code}
+              </code>
+            </div>
+
+            <button
+              onClick={copyCodeToClipboard}
+              className="flex items-center gap-1.5 text-xs font-black px-3 py-2 rounded-[10px] border-[1.5px] border-[#111] bg-[#FFD23F] hover:bg-[#ffe17d] transition-all cursor-pointer shadow-[1.5px_1.5px_0_#111]"
+            >
+              {copiedCode ? (
+                <>
+                  <Check size={14} className="text-green-700 font-black" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={14} />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
           </div>
 
           <button
-            onClick={copyCodeToClipboard}
-            className="flex items-center gap-1.5 text-xs font-black px-3 py-2 rounded-[10px] border-[1.5px] border-[#111] bg-[#FFD23F] hover:bg-[#ffe17d] transition-all cursor-pointer shadow-[1.5px_1.5px_0_#111]"
+            onClick={() => {
+              if (confirm('Is flat se disconnect ya leave karna chahte ho?')) {
+                leaveFlat();
+              }
+            }}
+            className="px-3 py-2 bg-white text-gray-600 border-[2px] border-[#111] rounded-[14px] shadow-[2px_2px_0_#111] text-xs font-bold hover:text-red-600 hover:bg-red-50 cursor-pointer"
+            title="Leave Flat"
           >
-            {copiedCode ? (
-              <>
-                <Check size={14} className="text-green-700 font-black" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy size={14} />
-                <span>Copy</span>
-              </>
-            )}
+            Leave Flat
           </button>
         </div>
       </div>
 
-      {/* 3 Core Section Action Cards (Responsive Grid: 1 col on mobile, 3 cols on tablet & desktop) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {/* 4 Core Section Action Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Expenses */}
         <Link
           href="/live/expenses"
@@ -287,11 +326,11 @@ export default function LiveDashboardPage() {
             <div className="w-12 h-12 rounded-[14px] bg-[#FFD23F] border-[2px] border-[#111] flex items-center justify-center text-2xl shadow-[2px_2px_0_#111] mb-3">
               💸
             </div>
-            <h3 className="font-heading font-black text-lg md:text-xl text-[#111]">
-              Expenses & Balances
+            <h3 className="font-heading font-black text-lg text-[#111]">
+              Expenses & Hisab
             </h3>
             <p className="text-xs font-semibold text-gray-600 mt-1 leading-relaxed">
-              {expenses.length} expenses recorded · Split with equal and custom shares with settle-up minimization.
+              {expenses.length} expenses recorded · Split shares with settle-up minimization.
             </p>
           </div>
 
@@ -310,16 +349,39 @@ export default function LiveDashboardPage() {
             <div className="w-12 h-12 rounded-[14px] bg-[#3DDC97] border-[2px] border-[#111] flex items-center justify-center text-2xl shadow-[2px_2px_0_#111] mb-3">
               🧹
             </div>
-            <h3 className="font-heading font-black text-lg md:text-xl text-[#111]">
-              Chores & Aaj ki Baari
+            <h3 className="font-heading font-black text-lg text-[#111]">
+              Chores & Rotation
             </h3>
             <p className="text-xs font-semibold text-gray-600 mt-1 leading-relaxed">
-              {pendingChores.length} pending chores · Auto-rotate tasks in circular order & 30-day fairness stats.
+              {pendingChores.length} pending tasks · Circular rotation & 30-day stats.
             </p>
           </div>
 
           <div className="mt-5 pt-3 border-t-[1.5px] border-gray-100 flex items-center justify-between text-xs font-black text-[#111] group-hover:text-black">
-            <span>View Chores Board</span>
+            <span>View Chores</span>
+            <ArrowRight size={16} />
+          </div>
+        </Link>
+
+        {/* House Chat */}
+        <Link
+          href="/live/chat"
+          className="flex flex-col justify-between p-5 bg-white border-[2.5px] border-[#111] rounded-[20px] shadow-[5px_5px_0_#111] hover:shadow-[2px_2px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] transition-all group"
+        >
+          <div>
+            <div className="w-12 h-12 rounded-[14px] bg-[#FF6B57] text-white border-[2px] border-[#111] flex items-center justify-center text-2xl shadow-[2px_2px_0_#111] mb-3">
+              💬
+            </div>
+            <h3 className="font-heading font-black text-lg text-[#111]">
+              Flat Group Chat
+            </h3>
+            <p className="text-xs font-semibold text-gray-600 mt-1 leading-relaxed">
+              Real-time messaging pad for roommates to coordinate on bills and groceries.
+            </p>
+          </div>
+
+          <div className="mt-5 pt-3 border-t-[1.5px] border-gray-100 flex items-center justify-between text-xs font-black text-[#111] group-hover:text-black">
+            <span>Open Chat</span>
             <ArrowRight size={16} />
           </div>
         </Link>
@@ -333,11 +395,11 @@ export default function LiveDashboardPage() {
             <div className="w-12 h-12 rounded-[14px] bg-[#6EC6FF] border-[2px] border-[#111] flex items-center justify-center text-2xl shadow-[2px_2px_0_#111] mb-3">
               📜
             </div>
-            <h3 className="font-heading font-black text-lg md:text-xl text-[#111]">
-              House Rules & AI
+            <h3 className="font-heading font-black text-lg text-[#111]">
+              House Rules
             </h3>
             <p className="text-xs font-semibold text-gray-600 mt-1 leading-relaxed">
-              {rules.length} active rules · Generate rules with AI and polite complaints rewriter.
+              {rules.length} active rules · Democratic agreements & AI complaints rewrite.
             </p>
           </div>
 
@@ -366,7 +428,7 @@ export default function LiveDashboardPage() {
         {flat.members.length === 0 ? (
           <div className="p-4 bg-[#FFF8EC] border-[2px] border-dashed border-[#111] rounded-[14px] text-center">
             <p className="text-xs font-bold text-gray-600">
-              No flatmates added yet! Add yourself and roommates below.
+              No flatmates added yet! Add roommates using the invite code or form below.
             </p>
           </div>
         ) : (
@@ -409,9 +471,9 @@ export default function LiveDashboardPage() {
               <p className="text-[10px] font-bold text-red-600 mt-1">{memberError}</p>
             )}
           </div>
-          <Button type="submit" variant="secondary" size="md">
+          <Button type="submit" variant="secondary" size="md" disabled={addingMember}>
             <Plus size={16} />
-            <span>Add Member</span>
+            <span>{addingMember ? 'Adding...' : 'Add Member'}</span>
           </Button>
         </form>
       </Card>

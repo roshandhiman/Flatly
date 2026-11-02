@@ -201,3 +201,19 @@ create policy "Listings are viewable by everyone" on public.listings for select 
 create policy "Anyone can insert listings" on public.listings for insert with check (true);
 create policy "Anyone can delete listings" on public.listings for delete using (true);
 
+
+-- ==============================================================
+-- 11. MESSAGES TABLE (Flat Group Chat)
+-- ==============================================================
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  flat_id uuid not null references public.flats(id) on delete cascade,
+  sender_name text not null,
+  text text not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_messages_flat on public.messages(flat_id);
+
+alter table public.messages enable row level security;
+create policy "Messages accessible by all" on public.messages for all using (true);
