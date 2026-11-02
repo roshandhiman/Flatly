@@ -1,0 +1,3226 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Flatly API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/auth/signup": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Signup",
+        "operationId": "signup_api_v1_auth_signup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get Me",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me/habits": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update My Habits",
+        "operationId": "update_my_habits_api_v1_users_me_habits_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HabitsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/flats": {
+      "post": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Create Flat",
+        "operationId": "create_flat_api_v1_flats_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlatCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/flats/{id}": {
+      "get": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Get Flat",
+        "operationId": "get_flat_api_v1_flats__id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/join": {
+      "post": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Join Flat",
+        "operationId": "join_flat_api_v1_flats_join_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlatJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/flats/{id}/members": {
+      "post": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Add Member By Name",
+        "operationId": "add_member_by_name_api_v1_flats__id__members_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/members/{member_id}": {
+      "delete": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Remove Member",
+        "operationId": "remove_member_api_v1_flats__id__members__member_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Member Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/expenses": {
+      "post": {
+        "tags": [
+          "Expenses & Balances"
+        ],
+        "summary": "Create Expense",
+        "operationId": "create_expense_api_v1_flats__id__expenses_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Expenses & Balances"
+        ],
+        "summary": "Get Expenses",
+        "operationId": "get_expenses_api_v1_flats__id__expenses_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseResponse"
+                  },
+                  "title": "Response Get Expenses Api V1 Flats  Id  Expenses Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/expenses/{expense_id}": {
+      "delete": {
+        "tags": [
+          "Expenses & Balances"
+        ],
+        "summary": "Delete Expense",
+        "operationId": "delete_expense_api_v1_flats__id__expenses__expense_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "expense_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Expense Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/balances": {
+      "get": {
+        "tags": [
+          "Expenses & Balances"
+        ],
+        "summary": "Get Flat Balances",
+        "operationId": "get_flat_balances_api_v1_flats__id__balances_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalancesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/settlements": {
+      "post": {
+        "tags": [
+          "Expenses & Balances"
+        ],
+        "summary": "Create Settlement",
+        "operationId": "create_settlement_api_v1_flats__id__settlements_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettlementResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/chores": {
+      "post": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Create Chore",
+        "operationId": "create_chore_api_v1_flats__id__chores_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChoreCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChoreResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Get Chores",
+        "operationId": "get_chores_api_v1_flats__id__chores_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChoreResponse"
+                  },
+                  "title": "Response Get Chores Api V1 Flats  Id  Chores Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/chores/{chore_id}": {
+      "delete": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Delete Chore",
+        "operationId": "delete_chore_api_v1_flats__id__chores__chore_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "chore_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Chore Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chores/{chore_id}/complete": {
+      "post": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Complete Chore",
+        "operationId": "complete_chore_api_v1_chores__chore_id__complete_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chore_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Chore Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChoreResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chores/{chore_id}/rotate": {
+      "post": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Rotate Chore",
+        "operationId": "rotate_chore_api_v1_chores__chore_id__rotate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chore_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Chore Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChoreResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/chores/fairness": {
+      "get": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Get Chores Fairness",
+        "operationId": "get_chores_fairness_api_v1_flats__id__chores_fairness_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChoreFairnessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/rules": {
+      "post": {
+        "tags": [
+          "Rules"
+        ],
+        "summary": "Create Rule",
+        "operationId": "create_rule_api_v1_flats__id__rules_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Rules"
+        ],
+        "summary": "Get Rules",
+        "operationId": "get_rules_api_v1_flats__id__rules_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RuleResponse"
+                  },
+                  "title": "Response Get Rules Api V1 Flats  Id  Rules Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{id}/rules/{rule_id}": {
+      "delete": {
+        "tags": [
+          "Rules"
+        ],
+        "summary": "Delete Rule",
+        "operationId": "delete_rule_api_v1_flats__id__rules__rule_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/{id}/approve": {
+      "post": {
+        "tags": [
+          "Rules"
+        ],
+        "summary": "Toggle Approve Rule",
+        "operationId": "toggle_approve_rule_api_v1_rules__id__approve_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/listings": {
+      "post": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Create Listing",
+        "operationId": "create_listing_api_v1_listings_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Get Listings",
+        "operationId": "get_listings_api_v1_listings_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "min_rent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Rent"
+            }
+          },
+          {
+            "name": "max_rent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Rent"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Location"
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "open",
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListingResponse"
+                  },
+                  "title": "Response Get Listings Api V1 Listings Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/listings/{id}": {
+      "get": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Get Listing",
+        "operationId": "get_listing_api_v1_listings__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Delete Listing",
+        "operationId": "delete_listing_api_v1_listings__id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/listings/{id}/compatibility": {
+      "get": {
+        "tags": [
+          "Listings"
+        ],
+        "summary": "Get Listing Compatibility",
+        "operationId": "get_listing_compatibility_api_v1_listings__id__compatibility_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompatibilityResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/match-explanation": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Explain Match",
+        "description": "Explains the deterministically computed compatibility breakdown.\nDoes NOT alter the score. Fallback provided if LLM is unavailable.",
+        "operationId": "explain_match_api_v1_ai_match_explanation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchExplanationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchExplanationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ai/house-rules": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Generate House Rules",
+        "description": "Generates 6-10 concise house rules.\nNOTE: Does NOT save to database automatically.\nClient must call /flats/{id}/rules/confirm to save.",
+        "operationId": "generate_house_rules_api_v1_ai_house_rules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HouseRulesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseRulesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ai/flats/{id}/rules/confirm": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Confirm House Rules",
+        "description": "Saves confirmed AI-generated rules with source='ai'.",
+        "operationId": "confirm_house_rules_api_v1_ai_flats__id__rules_confirm_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRulesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/polite-rewrite": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Polite Rewrite",
+        "description": "Rewrites blunt/rude text politely without obscuring the underlying issue.",
+        "operationId": "polite_rewrite_api_v1_ai_polite_rewrite_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoliteRewriteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoliteRewriteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ai/weekly-summary/{flat_id}": {
+      "get": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Get Weekly Summary",
+        "description": "Summarizes last 7 days of real flat data:\ntotal spent, top category, balances/debts, pending chores.\nPhrased in 3-4 friendly lines in light Hinglish.",
+        "operationId": "get_weekly_summary_api_v1_ai_weekly_summary__flat_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "flat_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Flat Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklySummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/condition-diff": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Check Condition Diff",
+        "description": "Accepts descriptions/notes of room condition (move-in vs move-out).\nReturns suggested differences with confidence.\nClearly labeled 'AI suggestion, needs human confirmation'.",
+        "operationId": "check_condition_diff_api_v1_ai_condition_diff_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConditionDiffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConditionDiffResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BalancesResponse": {
+        "properties": {
+          "balances": {
+            "items": {
+              "$ref": "#/components/schemas/MemberBalance"
+            },
+            "type": "array",
+            "title": "Balances"
+          },
+          "suggested_settlements": {
+            "items": {
+              "$ref": "#/components/schemas/TransferSuggestion"
+            },
+            "type": "array",
+            "title": "Suggested Settlements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "balances",
+          "suggested_settlements"
+        ],
+        "title": "BalancesResponse"
+      },
+      "ChoreCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "once",
+              "weekly"
+            ],
+            "title": "Frequency",
+            "default": "weekly"
+          },
+          "due_day": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Day",
+            "default": "Monday"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "ChoreCreate"
+      },
+      "ChoreFairnessItem": {
+        "properties": {
+          "member_id": {
+            "type": "integer",
+            "title": "Member Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "completed_count": {
+            "type": "integer",
+            "title": "Completed Count"
+          },
+          "percentage_share": {
+            "type": "number",
+            "title": "Percentage Share"
+          }
+        },
+        "type": "object",
+        "required": [
+          "member_id",
+          "name",
+          "completed_count",
+          "percentage_share"
+        ],
+        "title": "ChoreFairnessItem"
+      },
+      "ChoreFairnessResponse": {
+        "properties": {
+          "period_days": {
+            "type": "integer",
+            "title": "Period Days",
+            "default": 30
+          },
+          "total_completed": {
+            "type": "integer",
+            "title": "Total Completed"
+          },
+          "stats": {
+            "items": {
+              "$ref": "#/components/schemas/ChoreFairnessItem"
+            },
+            "type": "array",
+            "title": "Stats"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_completed",
+          "stats"
+        ],
+        "title": "ChoreFairnessResponse"
+      },
+      "ChoreResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "flat_id": {
+            "type": "integer",
+            "title": "Flat Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "frequency": {
+            "type": "string",
+            "title": "Frequency"
+          },
+          "due_day": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Day"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "last_completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Completed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "flat_id",
+          "title",
+          "assigned_to",
+          "frequency",
+          "due_day",
+          "status",
+          "last_completed_at"
+        ],
+        "title": "ChoreResponse"
+      },
+      "CompatibilityResponse": {
+        "properties": {
+          "group_score": {
+            "type": "number",
+            "title": "Group Score"
+          },
+          "is_dealbreaker": {
+            "type": "boolean",
+            "title": "Is Dealbreaker"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "group_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/FactorBreakdown"
+            },
+            "type": "array",
+            "title": "Group Breakdown"
+          },
+          "member_breakdowns": {
+            "items": {
+              "$ref": "#/components/schemas/MemberCompatibility"
+            },
+            "type": "array",
+            "title": "Member Breakdowns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "group_score",
+          "is_dealbreaker",
+          "summary",
+          "group_breakdown",
+          "member_breakdowns"
+        ],
+        "title": "CompatibilityResponse"
+      },
+      "ConditionDiffRequest": {
+        "properties": {
+          "move_in_notes_or_urls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Move In Notes Or Urls"
+          },
+          "move_out_notes_or_urls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Move Out Notes Or Urls"
+          }
+        },
+        "type": "object",
+        "required": [
+          "move_in_notes_or_urls",
+          "move_out_notes_or_urls"
+        ],
+        "title": "ConditionDiffRequest"
+      },
+      "ConditionDiffResponse": {
+        "properties": {
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer",
+            "default": "AI suggestion, needs human confirmation"
+          },
+          "detected_differences": {
+            "items": {
+              "$ref": "#/components/schemas/ConditionItem"
+            },
+            "type": "array",
+            "title": "Detected Differences"
+          },
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "detected_differences"
+        ],
+        "title": "ConditionDiffResponse"
+      },
+      "ConditionItem": {
+        "properties": {
+          "area": {
+            "type": "string",
+            "title": "Area"
+          },
+          "difference": {
+            "type": "string",
+            "title": "Difference"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": "AI suggestion, needs human confirmation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "area",
+          "difference",
+          "confidence"
+        ],
+        "title": "ConditionItem"
+      },
+      "ConfirmRulesRequest": {
+        "properties": {
+          "rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Rules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rules"
+        ],
+        "title": "ConfirmRulesRequest"
+      },
+      "ExpenseCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Amount"
+          },
+          "paid_by": {
+            "type": "integer",
+            "title": "Paid By"
+          },
+          "split_among": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Split Among"
+          },
+          "split_type": {
+            "type": "string",
+            "enum": [
+              "equal",
+              "custom"
+            ],
+            "title": "Split Type",
+            "default": "equal"
+          },
+          "custom_shares": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Shares"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "default": "General"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "amount",
+          "paid_by",
+          "split_among"
+        ],
+        "title": "ExpenseCreate"
+      },
+      "ExpenseResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "flat_id": {
+            "type": "integer",
+            "title": "Flat Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "paid_by": {
+            "type": "integer",
+            "title": "Paid By"
+          },
+          "split_among": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Split Among"
+          },
+          "split_type": {
+            "type": "string",
+            "title": "Split Type"
+          },
+          "custom_shares": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Shares"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "flat_id",
+          "title",
+          "amount",
+          "paid_by",
+          "split_among",
+          "split_type",
+          "category",
+          "created_at"
+        ],
+        "title": "ExpenseResponse"
+      },
+      "FactorBreakdown": {
+        "properties": {
+          "factor": {
+            "type": "string",
+            "title": "Factor"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "match",
+              "partial",
+              "mismatch"
+            ],
+            "title": "Status"
+          },
+          "user_value": {
+            "title": "User Value"
+          },
+          "flat_value": {
+            "title": "Flat Value"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "max_score": {
+            "type": "number",
+            "title": "Max Score"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "factor",
+          "status",
+          "user_value",
+          "flat_value",
+          "score",
+          "max_score",
+          "detail"
+        ],
+        "title": "FactorBreakdown"
+      },
+      "FlatCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "rent_total": {
+            "type": "number",
+            "title": "Rent Total",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "address"
+        ],
+        "title": "FlatCreate"
+      },
+      "FlatJoin": {
+        "properties": {
+          "invite_code": {
+            "type": "string",
+            "title": "Invite Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invite_code"
+        ],
+        "title": "FlatJoin"
+      },
+      "FlatResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "rent_total": {
+            "type": "number",
+            "title": "Rent Total"
+          },
+          "invite_code": {
+            "type": "string",
+            "title": "Invite Code"
+          },
+          "created_by": {
+            "type": "integer",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MemberResponse"
+            },
+            "type": "array",
+            "title": "Members",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "address",
+          "rent_total",
+          "invite_code",
+          "created_by",
+          "created_at"
+        ],
+        "title": "FlatResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Habits": {
+        "properties": {
+          "sleep_time": {
+            "type": "string",
+            "enum": [
+              "early",
+              "normal",
+              "late",
+              "night_owl"
+            ],
+            "title": "Sleep Time"
+          },
+          "cleanliness": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Cleanliness"
+          },
+          "guests": {
+            "type": "string",
+            "enum": [
+              "never",
+              "sometimes",
+              "often"
+            ],
+            "title": "Guests"
+          },
+          "food": {
+            "type": "string",
+            "enum": [
+              "veg",
+              "non_veg",
+              "eggetarian",
+              "any"
+            ],
+            "title": "Food"
+          },
+          "smoking": {
+            "type": "string",
+            "enum": [
+              "no",
+              "outside_only",
+              "yes"
+            ],
+            "title": "Smoking"
+          },
+          "noise_tolerance": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Noise Tolerance"
+          },
+          "wfh": {
+            "type": "boolean",
+            "title": "Wfh"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sleep_time",
+          "cleanliness",
+          "guests",
+          "food",
+          "smoking",
+          "noise_tolerance",
+          "wfh"
+        ],
+        "title": "Habits"
+      },
+      "HabitsUpdate": {
+        "properties": {
+          "habits": {
+            "$ref": "#/components/schemas/Habits"
+          }
+        },
+        "type": "object",
+        "required": [
+          "habits"
+        ],
+        "title": "HabitsUpdate"
+      },
+      "HouseRulesRequest": {
+        "properties": {
+          "flat_habits_summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Flat Habits Summary"
+          },
+          "optional_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Optional Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "flat_habits_summary"
+        ],
+        "title": "HouseRulesRequest"
+      },
+      "HouseRulesResponse": {
+        "properties": {
+          "rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Rules",
+            "description": "List of 6-10 concise house rules"
+          },
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "rules"
+        ],
+        "title": "HouseRulesResponse"
+      },
+      "ListingCreate": {
+        "properties": {
+          "flat_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flat Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "rent": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Rent"
+          },
+          "seats_available": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Seats Available",
+            "default": 1
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "location",
+          "rent",
+          "description"
+        ],
+        "title": "ListingCreate"
+      },
+      "ListingResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "flat_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flat Id"
+          },
+          "posted_by": {
+            "type": "integer",
+            "title": "Posted By"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "rent": {
+            "type": "number",
+            "title": "Rent"
+          },
+          "seats_available": {
+            "type": "integer",
+            "title": "Seats Available"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "posted_by",
+          "title",
+          "location",
+          "rent",
+          "seats_available",
+          "description",
+          "tags",
+          "status",
+          "created_at"
+        ],
+        "title": "ListingResponse"
+      },
+      "MatchExplanationRequest": {
+        "properties": {
+          "user_habits": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "User Habits"
+          },
+          "flat_members_habits": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Flat Members Habits"
+          },
+          "deterministic_breakdown": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Deterministic Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_habits",
+          "flat_members_habits",
+          "deterministic_breakdown"
+        ],
+        "title": "MatchExplanationRequest"
+      },
+      "MatchExplanationResponse": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "pros": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Pros"
+          },
+          "watch_outs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Watch Outs"
+          },
+          "tips": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tips"
+          },
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "pros",
+          "watch_outs",
+          "tips"
+        ],
+        "title": "MatchExplanationResponse"
+      },
+      "MemberBalance": {
+        "properties": {
+          "member_id": {
+            "type": "integer",
+            "title": "Member Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "net_balance": {
+            "type": "number",
+            "title": "Net Balance"
+          },
+          "total_paid": {
+            "type": "number",
+            "title": "Total Paid"
+          },
+          "total_owed": {
+            "type": "number",
+            "title": "Total Owed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "member_id",
+          "name",
+          "net_balance",
+          "total_paid",
+          "total_owed"
+        ],
+        "title": "MemberBalance"
+      },
+      "MemberCompatibility": {
+        "properties": {
+          "member_id": {
+            "type": "integer",
+            "title": "Member Id"
+          },
+          "member_name": {
+            "type": "string",
+            "title": "Member Name"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/FactorBreakdown"
+            },
+            "type": "array",
+            "title": "Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "member_id",
+          "member_name",
+          "score",
+          "breakdown"
+        ],
+        "title": "MemberCompatibility"
+      },
+      "MemberCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "MemberCreate"
+      },
+      "MemberResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "flat_id": {
+            "type": "integer",
+            "title": "Flat Id"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "joined_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Joined At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "flat_id",
+          "name",
+          "role",
+          "joined_at"
+        ],
+        "title": "MemberResponse"
+      },
+      "PoliteRewriteRequest": {
+        "properties": {
+          "complaint_text": {
+            "type": "string",
+            "title": "Complaint Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "complaint_text"
+        ],
+        "title": "PoliteRewriteRequest"
+      },
+      "PoliteRewriteResponse": {
+        "properties": {
+          "rewritten": {
+            "type": "string",
+            "title": "Rewritten"
+          },
+          "tone": {
+            "type": "string",
+            "title": "Tone"
+          },
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "rewritten",
+          "tone"
+        ],
+        "title": "PoliteRewriteResponse"
+      },
+      "RuleCreate": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "ai"
+            ],
+            "title": "Source",
+            "default": "manual"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "RuleCreate"
+      },
+      "RuleResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "flat_id": {
+            "type": "integer",
+            "title": "Flat Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "created_by": {
+            "type": "integer",
+            "title": "Created By"
+          },
+          "approvals": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Approvals"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "flat_id",
+          "text",
+          "created_by",
+          "approvals",
+          "source"
+        ],
+        "title": "RuleResponse"
+      },
+      "SettlementCreate": {
+        "properties": {
+          "from_member": {
+            "type": "integer",
+            "title": "From Member"
+          },
+          "to_member": {
+            "type": "integer",
+            "title": "To Member"
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_member",
+          "to_member",
+          "amount"
+        ],
+        "title": "SettlementCreate"
+      },
+      "SettlementResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "flat_id": {
+            "type": "integer",
+            "title": "Flat Id"
+          },
+          "from_member": {
+            "type": "integer",
+            "title": "From Member"
+          },
+          "to_member": {
+            "type": "integer",
+            "title": "To Member"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "flat_id",
+          "from_member",
+          "to_member",
+          "amount",
+          "created_at"
+        ],
+        "title": "SettlementResponse"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "Token"
+      },
+      "TransferSuggestion": {
+        "properties": {
+          "from_member": {
+            "type": "integer",
+            "title": "From Member"
+          },
+          "to_member": {
+            "type": "integer",
+            "title": "To Member"
+          },
+          "from_name": {
+            "type": "string",
+            "title": "From Name"
+          },
+          "to_name": {
+            "type": "string",
+            "title": "To Name"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_member",
+          "to_member",
+          "from_name",
+          "to_name",
+          "amount"
+        ],
+        "title": "TransferSuggestion"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "title": "Password"
+          },
+          "habits": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Habits"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "password"
+        ],
+        "title": "UserCreate"
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin"
+      },
+      "UserResponse": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "habits": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Habits"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "id",
+          "created_at"
+        ],
+        "title": "UserResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WeeklySummaryResponse": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "stats": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Stats"
+          },
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "stats"
+        ],
+        "title": "WeeklySummaryResponse"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/login"
+          }
+        }
+      }
+    }
+  }
+}
