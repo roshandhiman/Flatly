@@ -124,16 +124,17 @@ export function AppHeader() {
         </div>
 
         {/* Profile Avatar on Desktop — rendered client-side only to avoid hydration mismatch */}
-        <Link
-          href="/profile"
-          className="hidden md:flex w-9 h-9 rounded-full bg-[#111] text-[#FFD23F] font-black text-xs items-center justify-center border-[2px] border-[#111] shadow-[2px_2px_0_#111] hover:scale-105 transition-transform"
-          title="My Profile"
-          suppressHydrationWarning
-        >
-          <span suppressHydrationWarning>
-            {mounted && profile?.name ? profile.name.slice(0, 2).toUpperCase() : 'ME'}
-          </span>
-        </Link>
+        {mounted && (
+          <Link
+            href="/profile"
+            className="hidden md:flex w-9 h-9 rounded-full bg-[#111] text-[#FFD23F] font-black text-xs items-center justify-center border-[2px] border-[#111] shadow-[2px_2px_0_#111] hover:scale-105 transition-transform"
+            title={profile?.name || 'My Profile'}
+          >
+            <span>
+              {profile?.name ? profile.name.slice(0, 2).toUpperCase() : 'ME'}
+            </span>
+          </Link>
+        )}
       </div>
     </header>
   );

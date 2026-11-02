@@ -2,6 +2,7 @@ export interface Member {
   id: string;
   name: string;
   avatarColor: string;
+  role?: 'admin' | 'member';
 }
 
 export interface Flat {
@@ -10,6 +11,7 @@ export interface Flat {
   rent: number;
   code: string; // join code
   members: Member[];
+  imageUrl?: string;
   createdAt: string;
 }
 

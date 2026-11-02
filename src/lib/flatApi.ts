@@ -32,7 +32,8 @@ export async function createFlatInSupabase(name: string, rent: number, creatorNa
   const members: Member[] = memberData ? [{
     id: memberData.id,
     name: memberData.name,
-    avatarColor: memberData.avatar_color
+    avatarColor: memberData.avatar_color,
+    role: (memberData.role || 'admin') as 'admin' | 'member'
   }] : [];
 
   return {
@@ -64,7 +65,8 @@ export async function joinFlatInSupabase(code: string, userName: string) {
   let currentMembers: Member[] = existingMembers.map((m: any) => ({
     id: m.id,
     name: m.name,
-    avatarColor: m.avatar_color
+    avatarColor: m.avatar_color,
+    role: (m.role || 'member') as 'admin' | 'member'
   }));
 
   if (!alreadyMember && userName) {
@@ -83,7 +85,8 @@ export async function joinFlatInSupabase(code: string, userName: string) {
       currentMembers.push({
         id: newMem.id,
         name: newMem.name,
-        avatarColor: newMem.avatar_color
+        avatarColor: newMem.avatar_color,
+        role: 'member'
       });
     }
   }
@@ -116,12 +119,21 @@ export async function addMemberToSupabase(flatId: string, name: string, memberCo
   return {
     id: data.id,
     name: data.name,
-    avatarColor: data.avatar_color
+    avatarColor: data.avatar_color,
+    role: (data.role || 'member') as 'admin' | 'member'
   } as Member;
 }
 
 export async function removeMemberFromSupabase(memberId: string) {
   await supabase.from('flat_members').delete().eq('id', memberId);
+}
+
+export async function updateFlatImageInSupabase(flatId: string, imageUrl: string) {
+  try {
+    await supabase.from('flats').update({ image_url: imageUrl }).eq('id', flatId);
+  } catch (err) {
+    console.error('Failed to update flat image in Supabase:', err);
+  }
 }
 
 // --- Expenses API ---
@@ -237,7 +249,13 @@ export async function addRuleToSupabase(flatId: string, text: string) {
 }
 
 export async function toggleRuleAgreementInSupabase(ruleId: string, updatedAgreedBy: string[]) {
-  await supabase.from('rules').update({ agreed_by: updatedAgreedBy }).eq('id', ruleId);
+  // Ensure only valid UUIDs are sent to Postgres uuid[] column
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const safeAgreedBy = updatedAgreedBy.filter(id => UUID_REGEX.test(id));
+  const { error } = await supabase.from('rules').update({ agreed_by: safeAgreedBy }).eq('id', ruleId);
+  if (error) {
+    console.error('toggleRuleAgreementInSupabase error:', error);
+  }
 }
 
 export async function deleteRuleFromSupabase(id: string) {

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import { syncFlatDataFromSupabase } from '@/lib/flatApi';
 import { formatINR } from '@/lib/utils';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -11,10 +12,11 @@ import { Input } from '@/components/ui/Input';
 import { Avatar } from '@/components/ui/Avatar';
 import {
   ArrowRight,
+  Camera,
   Check,
-  CheckCircle2,
   Copy,
   DollarSign,
+  Image as ImageIcon,
   Info,
   LogOut,
   Plus,
@@ -27,8 +29,28 @@ import {
   RotateCw,
   Bot,
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
+
+const PHOTO_PRESETS = [
+  {
+    name: '🛋️ Cozy Living Room',
+    url: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    name: '🌆 City Balcony',
+    url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    name: '🍕 Chill Flat Pad',
+    url: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    name: '🌿 Modern Studio',
+    url: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80',
+  },
+];
 
 export default function LiveDashboardPage() {
   const router = useRouter();
@@ -39,6 +61,7 @@ export default function LiveDashboardPage() {
     addMember,
     removeMember,
     leaveFlat,
+    updateFlatImage,
     expenses,
     chores,
     rules,
@@ -62,6 +85,58 @@ export default function LiveDashboardPage() {
   const [memberError, setMemberError] = useState('');
   const [addingMember, setAddingMember] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Flat photo modal/drawer state
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if current user is admin
+  const currentMember =
+    flat?.members.find(
+      (m) =>
+        (profile?.name &&
+          (m.name.toLowerCase() === profile.name.toLowerCase() ||
+           m.name.toLowerCase().includes(profile.name.toLowerCase()))) ||
+        m.name.includes('(Admin)') ||
+        m.name.includes('(You)')
+    ) || flat?.members[0];
+
+  const isAdmin =
+    currentMember?.role === 'admin' ||
+    (flat?.members[0] &&
+      (flat.members[0].role === 'admin' ||
+       flat.members[0].name.includes('(Admin)') ||
+       (profile?.name &&
+        flat.members[0].name.toLowerCase().includes(profile.name.toLowerCase()))));
+
+  // Sync flat membership every 4 seconds so that if admin kicks someone, the screen updates
+  useEffect(() => {
+    if (!flat?.id) return;
+
+    const interval = setInterval(() => {
+      syncFlatDataFromSupabase(flat.id).then((res) => {
+        if (res.flat) {
+          const remoteMembers = res.flat.flat_members || [];
+          const currentUserName = profile?.name?.toLowerCase() || '';
+
+          if (currentUserName && remoteMembers.length > 0) {
+            const stillInFlat = remoteMembers.some(
+              (m: any) =>
+                m.name.toLowerCase() === currentUserName ||
+                m.name.toLowerCase().includes(currentUserName) ||
+                m.name.includes('(Admin)') ||
+                m.name.includes('(You)')
+            );
+            if (!stillInFlat) {
+              leaveFlat();
+            }
+          }
+        }
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [flat?.id, profile?.name, leaveFlat]);
 
   // Handle Create Flat
   const handleCreateFlat = async (e: React.FormEvent) => {
@@ -120,6 +195,20 @@ export default function LiveDashboardPage() {
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        updateFlatImage(reader.result);
+        setShowPhotoPicker(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (!isHydrated) {
     return (
       <div className="p-8 text-center font-heading font-black text-sm text-[#111]">
@@ -161,8 +250,8 @@ export default function LiveDashboardPage() {
 
             <form onSubmit={handleCreateFlat} className="space-y-4">
               <Input
-                label="Flat / Apartment Name"
-                placeholder="e.g. Koramangala 3BHK, Sunlight Pad"
+                label="Flat or Apartment Name"
+                placeholder="e.g. 3BHK Indiranagar, Apunn Ka Adda"
                 value={flatName}
                 onChange={(e) => {
                   setFlatName(e.target.value);
@@ -172,9 +261,9 @@ export default function LiveDashboardPage() {
               />
 
               <Input
-                label="Total Monthly Rent (₹)"
-                placeholder="e.g. 25000"
+                label="Monthly Rent in ₹ (Optional)"
                 type="number"
+                placeholder="e.g. 32000"
                 value={rent}
                 onChange={(e) => setRent(e.target.value)}
               />
@@ -233,9 +322,9 @@ export default function LiveDashboardPage() {
                 What you get with Flatly Live:
               </h4>
               <ul className="text-xs font-semibold text-gray-600 space-y-1.5 list-disc pl-4">
-                <li>Automated fair expense split & zero-loss debt minimization algorithm.</li>
+                <li>Automated fair expense split &amp; zero-loss debt minimization algorithm.</li>
                 <li>Weekly circular chores rotation so nobody does dishes twice.</li>
-                <li>Democratic house rules with member agreement approvals.</li>
+                <li>Democratic house rules with live member agreement approvals.</li>
                 <li>Shared flat group chat for daily discussions.</li>
               </ul>
             </div>
@@ -250,70 +339,211 @@ export default function LiveDashboardPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
-      {/* Flat Info Banner */}
-      <div className="p-5 md:p-7 bg-[#FFD23F] border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-3 py-0.5 bg-[#111] text-[#FFF8EC] rounded-full text-[10px] font-black uppercase tracking-wider">
-              ACTIVE FLAT
-            </span>
-            <span className="text-xs font-black text-gray-800">
-              {flat.members.length} Flatmates
-            </span>
-          </div>
-          <h1 className="font-heading font-black text-2xl md:text-3xl text-[#111]">
-            {flat.name}
-          </h1>
-          {flat.rent > 0 && (
-            <p className="text-xs md:text-sm font-bold text-gray-800 mt-1">
-              Monthly Total Rent: <span className="font-black text-[#111]">{formatINR(flat.rent)}/mo</span>
-            </p>
-          )}
-        </div>
+      {/* Hidden File Input for Image Upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
 
-        {/* Invite Code Box & Actions */}
-        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
-          <div className="flex items-center gap-2 p-2.5 bg-white border-[2px] border-[#111] rounded-[16px] shadow-[3px_3px_0_#111]">
-            <div className="px-2">
-              <span className="text-[10px] font-black uppercase text-gray-400 block">
-                INVITE CODE
-              </span>
-              <code className="font-mono font-black text-lg tracking-wider text-[#111]">
-                {flat.code}
-              </code>
+      {/* Flat Info Banner with Photo Support */}
+      <div className="relative border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] overflow-hidden bg-[#FFD23F]">
+        {/* Cover Photo if set */}
+        {flat.imageUrl && (
+          <div className="relative w-full h-44 sm:h-52 md:h-64 border-b-[2.5px] border-[#111] overflow-hidden">
+            <img
+              src={flat.imageUrl}
+              alt={flat.name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute bottom-4 left-5 right-5 flex items-end justify-between">
+              <div>
+                <span className="px-3 py-0.5 bg-[#FFD23F] text-[#111] rounded-full text-[10px] font-black uppercase tracking-wider border border-[#111] shadow-[1.5px_1.5px_0_#111]">
+                  ACTIVE FLAT
+                </span>
+                <h1 className="font-heading font-black text-2xl md:text-3xl text-white drop-shadow-md mt-1">
+                  {flat.name}
+                </h1>
+                {flat.rent > 0 && (
+                  <p className="text-xs md:text-sm font-bold text-gray-200 mt-0.5">
+                    Monthly Rent: <span className="font-black text-[#FFD23F]">{formatINR(flat.rent)}/mo</span>
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={() => setShowPhotoPicker(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 backdrop-blur-xs border-[2px] border-[#111] rounded-[12px] text-xs font-black text-[#111] shadow-[2px_2px_0_#111] hover:bg-white transition-all cursor-pointer"
+              >
+                <Camera size={14} />
+                <span>Change Photo</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Banner Details (when no image OR under image) */}
+        <div className={`p-5 md:p-6 ${flat.imageUrl ? 'bg-[#FFF8EC]' : 'bg-[#FFD23F]'} flex flex-col md:flex-row md:items-center justify-between gap-4`}>
+          {!flat.imageUrl && (
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-3 py-0.5 bg-[#111] text-[#FFF8EC] rounded-full text-[10px] font-black uppercase tracking-wider">
+                  ACTIVE FLAT
+                </span>
+                <span className="text-xs font-black text-gray-800">
+                  {flat.members.length} Flatmates
+                </span>
+              </div>
+              <h1 className="font-heading font-black text-2xl md:text-3xl text-[#111]">
+                {flat.name}
+              </h1>
+              {flat.rent > 0 && (
+                <p className="text-xs md:text-sm font-bold text-gray-800 mt-1">
+                  Monthly Total Rent: <span className="font-black text-[#111]">{formatINR(flat.rent)}/mo</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Invite Code Box & Actions */}
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+            {!flat.imageUrl && (
+              <button
+                onClick={() => setShowPhotoPicker(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-white border-[2px] border-[#111] rounded-[14px] shadow-[2.5px_2.5px_0_#111] text-xs font-black hover:bg-yellow-50 transition-all cursor-pointer"
+              >
+                <Camera size={15} />
+                <span>Add Flat Photo 📸</span>
+              </button>
+            )}
+
+            <div className="flex items-center gap-2 p-2 bg-white border-[2px] border-[#111] rounded-[14px] shadow-[2.5px_2.5px_0_#111]">
+              <div className="px-2">
+                <span className="text-[9px] font-black uppercase text-gray-400 block leading-tight">
+                  INVITE CODE
+                </span>
+                <code className="font-mono font-black text-base tracking-wider text-[#111]">
+                  {flat.code}
+                </code>
+              </div>
+
+              <button
+                onClick={copyCodeToClipboard}
+                className="flex items-center gap-1.5 text-xs font-black px-2.5 py-1.5 rounded-[10px] border-[1.5px] border-[#111] bg-[#FFD23F] hover:bg-[#ffe17d] transition-all cursor-pointer shadow-[1.5px_1.5px_0_#111]"
+              >
+                {copiedCode ? (
+                  <>
+                    <Check size={13} className="text-green-700 font-black" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={13} />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
             </div>
 
             <button
-              onClick={copyCodeToClipboard}
-              className="flex items-center gap-1.5 text-xs font-black px-3 py-2 rounded-[10px] border-[1.5px] border-[#111] bg-[#FFD23F] hover:bg-[#ffe17d] transition-all cursor-pointer shadow-[1.5px_1.5px_0_#111]"
+              onClick={() => {
+                if (confirm('Is flat se disconnect ya leave karna chahte ho?')) {
+                  leaveFlat();
+                }
+              }}
+              className="px-3 py-2 bg-white text-gray-600 border-[2px] border-[#111] rounded-[14px] shadow-[2px_2px_0_#111] text-xs font-bold hover:text-red-600 hover:bg-red-50 cursor-pointer"
+              title="Leave Flat"
             >
-              {copiedCode ? (
-                <>
-                  <Check size={14} className="text-green-700 font-black" />
-                  <span>Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy size={14} />
-                  <span>Copy</span>
-                </>
-              )}
+              Leave Flat
             </button>
           </div>
-
-          <button
-            onClick={() => {
-              if (confirm('Is flat se disconnect ya leave karna chahte ho?')) {
-                leaveFlat();
-              }
-            }}
-            className="px-3 py-2 bg-white text-gray-600 border-[2px] border-[#111] rounded-[14px] shadow-[2px_2px_0_#111] text-xs font-bold hover:text-red-600 hover:bg-red-50 cursor-pointer"
-            title="Leave Flat"
-          >
-            Leave Flat
-          </button>
         </div>
       </div>
+
+      {/* Flat Photo Picker Modal */}
+      {showPhotoPicker && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-[#FFF8EC] border-[3px] border-[#111] rounded-[24px] shadow-[8px_8px_0_#111] p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b-[2px] border-[#111]">
+              <div className="flex items-center gap-2">
+                <Camera size={20} />
+                <h3 className="font-heading font-black text-lg text-[#111]">
+                  Flat Cover Photo
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowPhotoPicker(false)}
+                className="w-8 h-8 rounded-full border-[2px] border-[#111] bg-white flex items-center justify-center hover:bg-gray-100 cursor-pointer font-bold"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Upload Custom Image Button */}
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase text-gray-600">
+                Option 1: Upload from Device
+              </label>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full p-4 border-[2px] border-dashed border-[#111] rounded-[16px] bg-white hover:bg-[#FFD23F]/20 flex items-center justify-center gap-3 font-heading font-black text-sm text-[#111] transition-colors cursor-pointer shadow-[2px_2px_0_#111]"
+              >
+                <ImageIcon size={20} />
+                <span>Choose photo from your gallery / files</span>
+              </button>
+            </div>
+
+            {/* Presets */}
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase text-gray-600">
+                Option 2: Choose Aesthetic Preset
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                {PHOTO_PRESETS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => {
+                      updateFlatImage(preset.url);
+                      setShowPhotoPicker(false);
+                    }}
+                    className="group relative h-24 rounded-[14px] border-[2px] border-[#111] overflow-hidden shadow-[2px_2px_0_#111] hover:scale-102 transition-transform cursor-pointer"
+                  >
+                    <img
+                      src={preset.url}
+                      alt={preset.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-end p-2">
+                      <span className="text-[11px] font-black text-white drop-shadow">
+                        {preset.name}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Remove photo option if one is set */}
+            {flat.imageUrl && (
+              <button
+                type="button"
+                onClick={() => {
+                  updateFlatImage('');
+                  setShowPhotoPicker(false);
+                }}
+                className="w-full py-2 bg-red-100 text-red-700 border-[1.5px] border-red-500 rounded-[12px] text-xs font-black hover:bg-red-200 transition-colors"
+              >
+                Remove Current Photo
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 4 Core Section Action Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -327,7 +557,7 @@ export default function LiveDashboardPage() {
               💸
             </div>
             <h3 className="font-heading font-black text-lg text-[#111]">
-              Expenses & Hisab
+              Expenses &amp; Hisab
             </h3>
             <p className="text-xs font-semibold text-gray-600 mt-1 leading-relaxed">
               {expenses.length} expenses recorded · Split shares with settle-up minimization.
@@ -350,10 +580,10 @@ export default function LiveDashboardPage() {
               🧹
             </div>
             <h3 className="font-heading font-black text-lg text-[#111]">
-              Chores & Rotation
+              Chores &amp; Rotation
             </h3>
             <p className="text-xs font-semibold text-gray-600 mt-1 leading-relaxed">
-              {pendingChores.length} pending tasks · Circular rotation & 30-day stats.
+              {pendingChores.length} pending tasks · Circular rotation &amp; 30-day stats.
             </p>
           </div>
 
@@ -399,7 +629,7 @@ export default function LiveDashboardPage() {
               House Rules
             </h3>
             <p className="text-xs font-semibold text-gray-600 mt-1 leading-relaxed">
-              {rules.length} active rules · Democratic agreements & AI complaints rewrite.
+              {rules.length} active rules · Democratic agreements &amp; AI complaints rewrite.
             </p>
           </div>
 
@@ -420,7 +650,7 @@ export default function LiveDashboardPage() {
             </h2>
           </div>
           <span className="text-xs font-bold text-gray-500">
-            All members can be selected when splitting expenses
+            {isAdmin ? '👑 You are Flat Admin (Can remove members)' : 'All members can split expenses'}
           </span>
         </div>
 
@@ -433,25 +663,58 @@ export default function LiveDashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {flat.members.map((m) => (
-              <div
-                key={m.id}
-                className="flex items-center justify-between p-3 bg-[#FFF8EC] border-[2px] border-[#111] rounded-[14px] shadow-[2.5px_2.5px_0_#111]"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Avatar name={m.name} color={m.avatarColor} size="sm" />
-                  <span className="text-xs font-bold text-[#111] truncate max-w-[130px]">{m.name}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeMember(m.id)}
-                  className="w-6 h-6 rounded-full bg-white border border-[#111] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
-                  title="Remove member"
+            {flat.members.map((m) => {
+              const isThisMemberAdmin =
+                m.role === 'admin' ||
+                m.name.includes('(Admin)') ||
+                m.id === flat.members[0]?.id;
+              const isSelf = m.id === currentMember?.id;
+
+              return (
+                <div
+                  key={m.id}
+                  className="flex items-center justify-between p-3 bg-[#FFF8EC] border-[2px] border-[#111] rounded-[14px] shadow-[2.5px_2.5px_0_#111]"
                 >
-                  &times;
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Avatar name={m.name} color={m.avatarColor} size="sm" />
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-[#111] truncate max-w-[110px]">
+                          {m.name.replace(' (Admin)', '').replace(' (You)', '')}
+                        </span>
+                        {isThisMemberAdmin && (
+                          <span className="px-1.5 py-0.2 bg-[#FFD23F] border border-[#111] rounded-full text-[9px] font-black text-[#111]">
+                            Admin 👑
+                          </span>
+                        )}
+                        {isSelf && (
+                          <span className="text-[10px] font-bold text-gray-500">
+                            (You)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Admin-only remove button: Only admin can see and trigger it; cannot remove self */}
+                  {isAdmin && !isSelf && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const cleanName = m.name.replace(' (Admin)', '').replace(' (You)', '');
+                        if (confirm(`Are you sure you want to remove ${cleanName} from this flat?`)) {
+                          await removeMember(m.id);
+                        }
+                      }}
+                      className="w-7 h-7 rounded-full bg-white border border-[#111] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer transition-colors shadow-[1px_1px_0_#111] flex-shrink-0 ml-1.5"
+                      title={`Remove ${m.name} (Admin Only)`}
+                    >
+                      &times;
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

@@ -57,11 +57,12 @@ create table if not exists public.flats (
   name text not null,
   rent numeric default 0,
   code text unique not null,
+  image_url text,
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz default now()
 );
 
-create index if unfair on public.flats(code);
+create index if not exists idx_flats_code on public.flats(code);
 
 -- ==============================================================
 -- 4. FLAT MEMBERS TABLE

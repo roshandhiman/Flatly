@@ -17,7 +17,8 @@ import {
   addRuleToSupabase,
   toggleRuleAgreementInSupabase,
   deleteRuleFromSupabase,
-  syncFlatDataFromSupabase
+  syncFlatDataFromSupabase,
+  updateFlatImageInSupabase
 } from './flatApi';
 
 // ---- localStorage helpers ----
@@ -54,6 +55,7 @@ interface StoreState {
   joinFlat: (code: string, userName?: string) => Promise<{ success: boolean; error?: string }>;
   addMember: (name: string) => Promise<void>;
   removeMember: (id: string) => Promise<void>;
+  updateFlatImage: (imageUrl: string) => void;
   leaveFlat: () => void;
 
   // Expenses
@@ -119,13 +121,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const remoteMembers: Member[] = (res.flat.flat_members || []).map((m: any) => ({
             id: m.id,
             name: m.name,
-            avatarColor: m.avatar_color
+            avatarColor: m.avatar_color,
+            role: (m.role || 'member') as 'admin' | 'member'
           }));
+
+          // If current user is logged in or identified, check if they were removed from the flat
+          const currentUserName = p?.name?.toLowerCase() || '';
+          const stillInFlat = remoteMembers.some(m => 
+            m.name.toLowerCase() === currentUserName ||
+            m.name.toLowerCase().includes(currentUserName) ||
+            m.name.toLowerCase().includes('admin') ||
+            m.name.toLowerCase().includes('you')
+          );
+
+          if (currentUserName && remoteMembers.length > 0 && !stillInFlat) {
+            // User was removed by admin -> reset flat state
+            setFlatState(null);
+            saveToStorage('flat', null);
+            return;
+          }
+
           const updatedFlat: Flat = {
             id: res.flat.id,
             name: res.flat.name,
             rent: Number(res.flat.rent),
             code: res.flat.code,
+            imageUrl: res.flat.image_url || f.imageUrl,
             members: remoteMembers.length > 0 ? remoteMembers : f.members,
             createdAt: res.flat.created_at
           };
@@ -261,6 +282,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setFlatState(null);
     saveToStorage('flat', null);
   }, []);
+
+  const updateFlatImage = useCallback((imageUrl: string) => {
+    if (flat?.id) {
+      updateFlatImageInSupabase(flat.id, imageUrl).catch(() => {});
+    }
+    setFlatState(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, imageUrl };
+      saveToStorage('flat', updated);
+      return updated;
+    });
+  }, [flat?.id]);
 
   const addMember = useCallback(async (name: string) => {
     if (!flat) return;
@@ -523,7 +556,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const value: StoreState = {
     profile, setProfile,
-    flat, createFlat, joinFlat, addMember, removeMember, leaveFlat,
+    flat, createFlat, joinFlat, addMember, removeMember, leaveFlat, updateFlatImage,
     expenses, addExpense, deleteExpense,
     settlements, addSettlement,
     chores, addChore, deleteChore, markChoreDone, rotateChore,

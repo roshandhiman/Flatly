@@ -128,6 +128,23 @@ function LoginContent() {
       setLoading(false);
       if (res.success) {
         setSuccessMsg('Logged in successfully!');
+        if (!profile?.name && res.data?.user) {
+          const resolvedName =
+            res.data.user.user_metadata?.full_name ||
+            res.data.user.user_metadata?.name ||
+            email.split('@')[0] ||
+            'Roommate';
+          setProfile({
+            name: resolvedName,
+            habits: {
+              sleepTime: 'Moderate (11 PM - 1 AM)',
+              cleanliness: 'Regular tidy up',
+              guests: 'Weekends only',
+              foodPreference: 'No preference',
+              smoking: 'Non-smoker',
+            },
+          });
+        }
         setTimeout(() => router.push(redirectTo), 1000);
       } else {
         setError(res.error || 'Invalid email or password');
