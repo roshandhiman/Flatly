@@ -1,7 +1,8 @@
 'use client';
 
-import { Flat, Expense, Settlement, Chore, ChoreCompletion, Rule, Listing, UserProfile, Member } from './types';
+import { Flat, Expense, Settlement, Chore, ChoreCompletion, Rule, Listing, UserProfile, Member, Review } from './types';
 import { generateId, generateJoinCode, getAvatarColor } from './utils';
+import { MOCK_LISTINGS } from './mockListings';
 import { supabase } from './supabase';
 import {
   createFlatInSupabase,
@@ -87,6 +88,7 @@ interface StoreState {
   listings: Listing[];
   addListing: (listing: Omit<Listing, 'id' | 'createdAt'>) => void;
   deleteListing: (id: string) => void;
+  addReviewToListing: (listingId: string, review: { author: string; rating: number; comment: string }) => void;
 
   // Hydration
   isHydrated: boolean;
@@ -114,7 +116,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setSettlementsState(loadFromStorage('settlements', []));
     setChoresState(loadFromStorage('chores', []));
     setRulesState(loadFromStorage('rules', []));
-    setListingsState(loadFromStorage('listings', []));
+    const cachedListings = loadFromStorage<Listing[]>('listings', []);
+    if (!cachedListings || cachedListings.length === 0) {
+      setListingsState(MOCK_LISTINGS);
+      saveToStorage('listings', MOCK_LISTINGS);
+    } else {
+      setListingsState(cachedListings);
+    }
     setIsHydrated(true);
 
     // If a flat is connected, try syncing latest data from Supabase
@@ -687,6 +695,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const addReviewToListing = useCallback((listingId: string, review: { author: string; rating: number; comment: string }) => {
+    setListingsState(prev => {
+      const updated = prev.map(l => {
+        if (l.id !== listingId) return l;
+        const newReview: Review = {
+          id: generateId(),
+          author: review.author,
+          rating: review.rating,
+          comment: review.comment,
+          date: new Date().toISOString().split('T')[0],
+          avatarColor: getAvatarColor(Math.floor(Math.random() * 7))
+        };
+        const currentReviews = l.reviews || [];
+        const nextReviews = [newReview, ...currentReviews];
+        const nextReviewCount = nextReviews.length;
+        const nextRating = Number((nextReviews.reduce((acc, r) => acc + r.rating, 0) / nextReviewCount).toFixed(1));
+        return {
+          ...l,
+          reviews: nextReviews,
+          reviewCount: nextReviewCount,
+          rating: nextRating
+        };
+      });
+      saveToStorage('listings', updated);
+      return updated;
+    });
+  }, []);
+
   const value: StoreState = {
     profile, setProfile,
     flat, createFlat, joinFlat, addMember, removeMember, leaveFlat, updateFlatImage,
@@ -694,7 +730,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     settlements, addSettlement,
     chores, addChore, deleteChore, markChoreDone, rotateChore,
     rules, addRule, deleteRule, toggleRuleAgreement,
-    listings, addListing, deleteListing,
+    listings, addListing, deleteListing, addReviewToListing,
     isHydrated,
   };
 

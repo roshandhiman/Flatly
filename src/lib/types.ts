@@ -58,14 +58,33 @@ export interface Rule {
   createdAt: string;
 }
 
+export interface Review {
+  id: string;
+  author: string;
+  rating: number; // 1-5
+  comment: string;
+  date: string;
+  avatarColor?: string;
+}
+
 export interface Listing {
   id: string;
   title: string;
   location: string;
+  city?: string;
+  area?: string;
+  coordinates?: { lat: number; lng: number };
   rent: number;
   seats: number;
   description: string;
   tags: string[];
+  imageUrl?: string;
+  gallery?: string[];
+  rating?: number;
+  reviewCount?: number;
+  reviews?: Review[];
+  contactName?: string;
+  contactPhone?: string;
   createdAt: string;
 }
 

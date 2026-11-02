@@ -8,16 +8,21 @@ import { formatINR, formatDate } from '@/lib/utils';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { Avatar } from '@/components/ui/Avatar';
 import {
   ArrowLeft,
   Bed,
+  Check,
   CheckCircle2,
   Heart,
   Info,
   MapPin,
   MessageCircle,
+  MessageSquare,
+  Phone,
   Share2,
   Sparkles,
+  Star,
   Tag,
   Trash2,
   Users,
@@ -30,11 +35,18 @@ function ListingDetailContent() {
   const router = useRouter();
   const id = params?.id as string;
 
-  const { listings, deleteListing, profile } = useStore();
+  const { listings, deleteListing, addReviewToListing, profile } = useStore();
   const listing = listings.find((l) => l.id === id);
 
   const [isConnectOpen, setIsConnectOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [selectedPhotoIdx, setSelectedPhotoIdx] = useState(0);
+
+  // New review state
+  const [reviewerName, setReviewerName] = useState(profile?.name || '');
+  const [newRating, setNewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSuccess, setReviewSuccess] = useState(false);
 
   if (!listing) {
     return (
@@ -72,6 +84,34 @@ function ListingDetailContent() {
     }
   };
 
+  const handleAddReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewComment.trim()) return;
+
+    addReviewToListing(listing.id, {
+      author: reviewerName.trim() || 'Anonymous Roommate',
+      rating: newRating,
+      comment: reviewComment.trim(),
+    });
+
+    setReviewComment('');
+    setReviewSuccess(true);
+    setTimeout(() => setReviewSuccess(false), 3000);
+  };
+
+  const photos = listing.gallery && listing.gallery.length > 0
+    ? listing.gallery
+    : listing.imageUrl
+    ? [listing.imageUrl]
+    : [
+        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80',
+      ];
+
+  const reviews = listing.reviews || [];
+  const averageRating = listing.rating || 4.8;
+  const reviewCount = listing.reviewCount || reviews.length;
+
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
       {/* Top Bar Navigation */}
@@ -105,20 +145,54 @@ function ListingDetailContent() {
 
       {/* Main Responsive Grid Layout (Desktop 2-Col, Mobile 1-Col) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Room Details & Images & Description (Col 7) */}
+        {/* Left Column: Room Details & Images & Description & Reviews (Col 7) */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] overflow-hidden">
-            {/* Banner Artwork */}
-            <div className="h-52 md:h-64 bg-[#FFD23F] border-b-[2.5px] border-[#111] flex flex-col items-center justify-center relative p-6 text-center">
-              <span className="text-6xl md:text-7xl mb-2">🏡</span>
-              <span className="px-3.5 py-1 bg-white border-[2px] border-[#111] rounded-full text-xs font-black shadow-[2px_2px_0_#111]">
-                Verified Room Vacancy
-              </span>
+            {/* Main Photo Display */}
+            <div className="relative h-64 sm:h-80 md:h-96 bg-gray-100 border-b-[2.5px] border-[#111] overflow-hidden">
+              <img
+                src={photos[selectedPhotoIdx] || photos[0]}
+                alt={listing.title}
+                className="w-full h-full object-cover"
+              />
 
-              <span className="absolute bottom-3 right-3 text-xs font-bold text-gray-700 bg-white/90 px-3 py-1 rounded-full border border-[#111]">
-                Posted {formatDate(listing.createdAt)}
-              </span>
+              <div className="absolute top-4 left-4 flex gap-2">
+                <span className="px-3.5 py-1 bg-white border-[2px] border-[#111] rounded-full text-xs font-black shadow-[2px_2px_0_#111]">
+                  Verified Room Vacancy
+                </span>
+                {listing.city && (
+                  <span className="px-3 py-1 bg-[#FFD23F] border-[2px] border-[#111] rounded-full text-xs font-black shadow-[2px_2px_0_#111]">
+                    📍 {listing.city}
+                  </span>
+                )}
+              </div>
+
+              <div className="absolute bottom-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-black/80 backdrop-blur-xs text-white rounded-full text-xs font-bold border border-white/20">
+                <Star size={13} className="text-[#FFD23F] fill-[#FFD23F]" />
+                <span className="font-black">{averageRating}</span>
+                <span>({reviewCount} reviews)</span>
+              </div>
             </div>
+
+            {/* Photo Gallery Thumbnails */}
+            {photos.length > 1 && (
+              <div className="flex gap-2 p-3 bg-[#FFF8EC] border-b-[2px] border-[#111] overflow-x-auto">
+                {photos.map((url, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedPhotoIdx(idx)}
+                    className={`relative w-20 h-14 rounded-[10px] border-[2px] border-[#111] overflow-hidden flex-shrink-0 cursor-pointer transition-all ${
+                      selectedPhotoIdx === idx
+                        ? 'ring-2 ring-black scale-105 shadow-[2px_2px_0_#111]'
+                        : 'opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={url} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Content Details */}
             <div className="p-6 md:p-8 space-y-6">
@@ -132,7 +206,7 @@ function ListingDetailContent() {
                 </div>
               </div>
 
-              {/* Pricing & Capacity highlight block on mobile / tablet */}
+              {/* Pricing & Capacity highlight block */}
               <div className="grid grid-cols-2 gap-4 p-4 bg-[#FFF8EC] border-[2px] border-[#111] rounded-[16px]">
                 <div>
                   <span className="text-[11px] font-black uppercase text-gray-500 block">
@@ -159,7 +233,7 @@ function ListingDetailContent() {
               {listing.tags.length > 0 && (
                 <div className="space-y-2.5">
                   <h3 className="font-heading font-black text-xs uppercase tracking-wider text-gray-500">
-                    Features & Amenities
+                    Features &amp; Amenities
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {listing.tags.map((tag) => (
@@ -177,12 +251,176 @@ function ListingDetailContent() {
               {/* Description */}
               <div className="space-y-2.5">
                 <h3 className="font-heading font-black text-xs uppercase tracking-wider text-gray-500">
-                  About the Place & Roommate Expectations
+                  About the Place &amp; Roommate Expectations
                 </h3>
                 <p className="text-xs md:text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap bg-[#FFF8EC]/60 p-4 rounded-[16px] border-[1.5px] border-black/15">
                   {listing.description}
                 </p>
               </div>
+
+              {/* Poster Contact Info */}
+              {listing.contactName && (
+                <div className="p-4 bg-white border-[2px] border-[#111] rounded-[16px] flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar name={listing.contactName} color="#FFD23F" size="md" />
+                    <div>
+                      <div className="font-heading font-black text-sm text-[#111]">
+                        {listing.contactName}
+                      </div>
+                      <div className="text-xs text-gray-500 font-bold">Current Flatmate / Poster</div>
+                    </div>
+                  </div>
+                  {listing.contactPhone && (
+                    <span className="text-xs font-mono font-bold bg-[#3DDC97] px-3 py-1.5 rounded-[10px] border border-[#111] shadow-[1px_1px_0_#111]">
+                      {listing.contactPhone}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* REVIEWS & COMMENTS SECTION */}
+          <div className="bg-white border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] p-6 md:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b-[2px] border-[#111]">
+              <div className="flex items-center gap-2">
+                <MessageSquare size={20} />
+                <h3 className="font-heading font-black text-lg md:text-xl text-[#111]">
+                  Roommate Ratings &amp; Comments ({reviews.length})
+                </h3>
+              </div>
+              <div className="flex items-center gap-1.5 bg-[#FFD23F] px-3 py-1 rounded-full border border-[#111] shadow-[1.5px_1.5px_0_#111]">
+                <Star size={14} className="fill-[#111] text-[#111]" />
+                <span className="font-heading font-black text-sm text-[#111]">{averageRating} / 5.0</span>
+              </div>
+            </div>
+
+            {/* List Existing Reviews */}
+            {reviews.length === 0 ? (
+              <div className="p-6 bg-[#FFF8EC] border-[2px] border-dashed border-[#111] rounded-[16px] text-center">
+                <p className="text-xs font-bold text-gray-600">
+                  No reviews yet. Be the first roommate or visitor to leave a review!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="p-4 bg-[#FFF8EC] border-[2px] border-[#111] rounded-[16px] shadow-[2.5px_2.5px_0_#111] space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar name={rev.author} color={rev.avatarColor || '#FFD23F'} size="sm" />
+                        <div>
+                          <span className="font-heading font-black text-xs text-[#111]">
+                            {rev.author}
+                          </span>
+                          <span className="text-[10px] text-gray-400 block font-semibold">
+                            {formatDate(rev.date)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Stars */}
+                      <div className="flex items-center gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            size={12}
+                            className={
+                              i < rev.rating
+                                ? 'text-amber-500 fill-amber-500'
+                                : 'text-gray-300'
+                            }
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className="text-xs font-medium text-gray-800 leading-relaxed pl-9">
+                      {rev.comment}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Review Form */}
+            <div className="pt-4 border-t-[2px] border-[#111] space-y-3">
+              <h4 className="font-heading font-black text-sm text-[#111]">
+                Leave a Comment &amp; Rating ✍️
+              </h4>
+
+              {reviewSuccess && (
+                <div className="p-3 bg-[#3DDC97] border-[1.5px] border-[#111] rounded-[12px] text-xs font-black text-[#111] flex items-center gap-2 shadow-[2px_2px_0_#111]">
+                  <Check size={16} strokeWidth={3} />
+                  <span>Review and rating added successfully!</span>
+                </div>
+              )}
+
+              <form onSubmit={handleAddReview} className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-gray-600 block mb-1">
+                      Your Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Aman, Priya"
+                      value={reviewerName}
+                      onChange={(e) => setReviewerName(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-bold bg-[#FFF8EC] border-[2px] border-[#111] rounded-[10px] shadow-[1.5px_1.5px_0_#111] focus:outline-none focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-gray-600 block mb-1">
+                      Rating (1 to 5 Stars)
+                    </label>
+                    <div className="flex items-center gap-2 pt-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setNewRating(star)}
+                          className="cursor-pointer transition-transform hover:scale-110"
+                        >
+                          <Star
+                            size={20}
+                            className={
+                              star <= newRating
+                                ? 'text-amber-500 fill-amber-500'
+                                : 'text-gray-300'
+                            }
+                          />
+                        </button>
+                      ))}
+                      <span className="text-xs font-black text-[#111] ml-2">
+                        {newRating} / 5
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase text-gray-600 block mb-1">
+                    Your Review / Feedback
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Describe the atmosphere, flatmates, amenities, noise levels, or neighborhood..."
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-medium bg-[#FFF8EC] border-[2px] border-[#111] rounded-[10px] shadow-[1.5px_1.5px_0_#111] focus:outline-none focus:bg-white"
+                  />
+                </div>
+
+                <Button type="submit" variant="secondary" size="md">
+                  <Star size={15} />
+                  <span>Submit Review</span>
+                </Button>
+              </form>
             </div>
           </div>
         </div>
@@ -217,7 +455,7 @@ function ListingDetailContent() {
             </Button>
 
             <p className="text-center text-[11px] font-semibold text-gray-500">
-              No brokerage fees • Verified student & young professional listings
+              No brokerage fees • Verified student &amp; young professional listings
             </p>
           </div>
 
@@ -264,7 +502,7 @@ function ListingDetailContent() {
         </div>
       </div>
 
-      {/* Connect Bottom Sheet (Stage 1 Friendly Modal) */}
+      {/* Connect Bottom Sheet */}
       <BottomSheet
         isOpen={isConnectOpen}
         onClose={() => setIsConnectOpen(false)}
@@ -283,13 +521,20 @@ function ListingDetailContent() {
             Your inquiry for <strong>{listing.title}</strong> has been recorded! You can coordinate rent splits and chores as soon as you move in.
           </p>
 
+          {listing.contactPhone && (
+            <div className="p-3 bg-white border-[2px] border-[#111] rounded-[12px] flex items-center justify-center gap-2 font-mono font-black text-sm">
+              <Phone size={16} />
+              <span>{listing.contactPhone}</span>
+            </div>
+          )}
+
           <div className="p-4 bg-[#E6F9F0] border-[2px] border-[#111] rounded-[14px] text-xs font-bold text-[#111] text-left space-y-1.5">
             <div className="flex items-center gap-1.5 text-green-800 font-black">
               <CheckCircle2 size={16} />
               <span>Contact interest noted!</span>
             </div>
             <p className="text-xs text-gray-600">
-              In Stage 2, direct WhatsApp and in-app instant chat will connect you straight to the poster.
+              You can message the flatmate directly or invite them into your Flatly Live group.
             </p>
           </div>
 
