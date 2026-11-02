@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { formatINR, formatDate } from '@/lib/utils';
+import { computeCompatibility, compatStatusMeta, CompatStatus } from '@/lib/compatibility';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { BottomSheet } from '@/components/ui/BottomSheet';
@@ -38,6 +39,12 @@ function ListingDetailContent() {
   const { listings, addReviewToListing, profile } = useStore();
   const listing = listings.find((l) => l.id === id);
 
+  // Real profile-vs-listing compatibility (computed, not hardcoded)
+  const compat = useMemo(
+    () => (listing ? computeCompatibility(profile, listing) : null),
+    [profile, listing]
+  );
+
   const [isConnectOpen, setIsConnectOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedPhotoIdx, setSelectedPhotoIdx] = useState(0);
@@ -45,6 +52,7 @@ function ListingDetailContent() {
   // AI Analysis state
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<{ analysis: string; provider: string } | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   // New review state
   const [reviewerName, setReviewerName] = useState(profile?.name || '');
@@ -54,6 +62,7 @@ function ListingDetailContent() {
 
   const handleRunAiAnalysis = async () => {
     setAiLoading(true);
+    setAiError(null);
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
@@ -64,11 +73,14 @@ function ListingDetailContent() {
         }),
       });
       const data = await res.json();
-      if (data.analysis) {
+      if (res.ok && data.analysis) {
         setAiResult({ analysis: data.analysis, provider: data.provider });
+      } else {
+        setAiError(data.error || 'AI service unreachable. Thodi der baad try karo.');
       }
     } catch (err) {
       console.error('AI analysis error:', err);
+      setAiError('AI service unreachable. Thodi der baad try karo.');
     } finally {
       setAiLoading(false);
     }
@@ -470,7 +482,7 @@ function ListingDetailContent() {
             </p>
           </div>
 
-          {/* Roommate Compatibility Preview Card */}
+          {/* Roommate Compatibility Card (real profile-based calculation) */}
           <div className="p-6 bg-[#FFF8EC] border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-3.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -479,29 +491,39 @@ function ListingDetailContent() {
                   Roommate Compatibility
                 </h3>
               </div>
-              <span className="px-2.5 py-0.5 bg-[#FFD23F] border-[1.5px] border-[#111] rounded-full text-xs font-black shadow-[1px_1px_0_#111]">
-                88% Match
-              </span>
+              {compat && (
+                <span className={`px-2.5 py-0.5 border-[1.5px] border-[#111] rounded-full text-xs font-black shadow-[1px_1px_0_#111] ${
+                  compat.score >= 75 ? 'bg-[#3DDC97]' : compat.score >= 55 ? 'bg-[#FFD23F]' : 'bg-[#FF6B57]'
+                }`}>
+                  {compat.score}% Match
+                </span>
+              )}
             </div>
 
             <p className="text-xs text-gray-600 font-medium">
-              Based on your habits profile ({profile?.habits?.sleepTime ? 'Completed' : 'Set up in Profile'}):
+              {compat
+                ? 'Aapke profile habits vs is listing ki real information se calculated:'
+                : 'Compatibility score calculate karne ke liye apna habits profile set up karo:'}
             </p>
 
-            <div className="space-y-2 text-xs font-bold text-[#111]">
-              <div className="flex items-center justify-between p-2.5 bg-white border-[1.5px] border-[#111] rounded-[10px]">
-                <span>😴 Sleep Hours</span>
-                <span className="text-[#00A86B]">Match (Aligned)</span>
+            {compat && (
+              <div className="space-y-2 text-xs font-bold text-[#111]">
+                {compat.factors.map((factor) => {
+                  const meta = compatStatusMeta(factor.status as CompatStatus);
+                  return (
+                    <div key={factor.label} className="p-2.5 bg-white border-[1.5px] border-[#111] rounded-[10px]">
+                      <div className="flex items-center justify-between">
+                        <span>{factor.label}</span>
+                        <span className={meta.color}>{meta.text}</span>
+                      </div>
+                      <p className="text-[10px] font-semibold text-gray-500 mt-1 leading-relaxed">
+                        {factor.detail}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-white border-[1.5px] border-[#111] rounded-[10px]">
-                <span>🧼 Cleanliness Standard</span>
-                <span className="text-[#00A86B]">Match (Regular Tidy)</span>
-              </div>
-              <div className="flex items-center justify-between p-2.5 bg-white border-[1.5px] border-[#111] rounded-[10px]">
-                <span>🚭 Smoking Policy</span>
-                <span className="text-[#00A86B]">No Dealbreaker</span>
-              </div>
-            </div>
+            )}
 
             <Link
               href="/profile"
@@ -511,23 +533,30 @@ function ListingDetailContent() {
             </Link>
           </div>
 
-          {/* Local Qwen 2.5 AI Room Analyzer Card */}
+          {/* AI Room Analyzer Card (cloud LLM: Groq / Gemini) */}
           <div className="p-6 bg-[#6EC6FF]/20 border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-4">
             <div className="flex items-center justify-between pb-2 border-b-[2px] border-[#111]">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🤖</span>
                 <h3 className="font-heading font-black text-sm md:text-base text-[#111]">
-                  Qwen 2.5 Room Advisor
+                  AI Room Advisor
                 </h3>
               </div>
               <span className="px-2 py-0.5 bg-[#3DDC97] border border-[#111] rounded-full text-[10px] font-black shadow-[1px_1px_0_#111]">
-                Local AI
+                {aiResult ? aiResult.provider.split('(')[1]?.replace(')', '') || 'Cloud AI' : 'Live AI'}
               </span>
             </div>
 
             <p className="text-xs font-semibold text-gray-700 leading-relaxed">
-              Run real-time deep analysis on this room using your local <strong>qwen2.5:1.5b</strong> model running on Ollama.
+              Ye room ka real-time honest analysis {profile?.habits?.sleepTime ? 'aapke profile habits ko consider karke' : ''} cloud AI model se — no canned text, only live output from the actual provider shown above.
             </p>
+
+            {aiError && (
+              <div className="p-4 bg-[#FF6B57]/15 border-[2px] border-[#FF6B57] rounded-[16px] space-y-1.5 shadow-[2px_2px_0_#111]">
+                <div className="text-[10px] font-black text-[#FF3B30] uppercase">AI UNAVAILABLE</div>
+                <div className="text-xs font-medium text-gray-800">{aiError}</div>
+              </div>
+            )}
 
             {aiResult && (
               <div className="p-4 bg-white border-[2px] border-[#111] rounded-[16px] space-y-2.5 shadow-[2px_2px_0_#111] animate-in fade-in">
@@ -551,7 +580,7 @@ function ListingDetailContent() {
               className="py-3"
             >
               <Sparkles size={16} />
-              <span>{aiLoading ? 'Qwen 2.5 is Analyzing...' : aiResult ? 'Re-Analyze with Qwen AI' : 'Analyze Room with Qwen AI'}</span>
+              <span>{aiLoading ? 'AI is Analyzing (real LLM call)...' : aiResult ? 'Re-Analyze Room' : 'Analyze Room with AI'}</span>
             </Button>
           </div>
         </div>

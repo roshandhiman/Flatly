@@ -31,6 +31,7 @@ import {
   Building2
 } from 'lucide-react';
 import { Listing } from '@/lib/types';
+import { computeCompatibility } from '@/lib/compatibility';
 
 const AVAILABLE_TAGS = [
   'Fully Furnished',
@@ -46,12 +47,26 @@ const AVAILABLE_TAGS = [
 const FILTER_CHIPS = ['All', 'Under ₹10k', 'Under ₹15k', 'Furnished', 'Pet friendly'];
 const CITIES = ['All Cities', 'Bengaluru', 'Mumbai', 'Delhi NCR', 'Pune'];
 
+// Varied flat photos pool so posted listings don't all look identical
+const FLAT_IMAGE_POOL = [
+  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80',
+];
+
+function pickFlatImage() {
+  return FLAT_IMAGE_POOL[Math.floor(Math.random() * FLAT_IMAGE_POOL.length)];
+}
+
 function FindPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') === 'post' ? 'post' : 'rooms';
 
-  const { listings, addListing } = useStore();
+  const { listings, addListing, profile } = useStore();
   const [activeTab, setActiveTab] = useState<'rooms' | 'post'>(initialTab);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
 
@@ -70,6 +85,7 @@ function FindPageContent() {
   const [rent, setRent] = useState('');
   const [seats, setSeats] = useState('1');
   const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [createdSuccess, setCreatedSuccess] = useState(false);
@@ -111,7 +127,7 @@ function FindPageContent() {
       seats: seatsNum,
       description: description.trim(),
       tags: selectedTags,
-      imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80',
+      imageUrl: imageUrl.trim() || pickFlatImage(),
       rating: 5.0,
       reviewCount: 1,
       reviews: [],
@@ -123,6 +139,7 @@ function FindPageContent() {
     setRent('');
     setSeats('1');
     setDescription('');
+    setImageUrl('');
     setSelectedTags([]);
     setErrors({});
     setCreatedSuccess(true);
@@ -168,6 +185,19 @@ function FindPageContent() {
       return true;
     });
   }, [listings, searchQuery, selectedCity, activeFilter]);
+
+  // Compatibility-ranked listings: when the user has a habits profile set,
+  // rooms are sorted best-profile-match first (no fake scores — real data only)
+  const rankedListings = useMemo(() => {
+    const scored = filteredListings.map((listing) => ({
+      listing,
+      compat: computeCompatibility(profile, listing),
+    }));
+    if (profile?.habits) {
+      scored.sort((a, b) => (b.compat?.score ?? 0) - (a.compat?.score ?? 0));
+    }
+    return scored;
+  }, [filteredListings, profile]);
 
   const activePinListing = useMemo(() => {
     return filteredListings.find((l) => l.id === selectedPinId) || filteredListings[0];
@@ -493,9 +523,9 @@ function FindPageContent() {
                   />
                 )
               ) : (
-                /* Responsive Grid: 1 col on mobile, 2 cols on tablet, 3 cols on laptop/desktop */
+                /* Responsive Grid: 1 col mobile, 2 cols tablet, 3 cols laptop/desktop — sorted by profile compatibility when profile is set */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredListings.map((listing) => (
+                  {rankedListings.map(({ listing, compat }, idx) => (
                     <div
                       key={listing.id}
                       className="bg-white border-[2.5px] border-[#111] rounded-[20px] shadow-[6px_6px_0_#111] overflow-hidden transition-all hover:shadow-[3px_3px_0_#111] hover:translate-x-[2px] hover:translate-y-[2px] flex flex-col justify-between"
@@ -509,10 +539,20 @@ function FindPageContent() {
                             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                           />
 
-                          <div className="absolute top-3 left-3 flex gap-1.5">
+                          <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5">
                             {listing.city && (
                               <span className="px-2.5 py-0.5 bg-[#FFD23F] border border-[#111] rounded-full text-[10px] font-black shadow-[1.5px_1.5px_0_#111]">
                                 📍 {listing.city}
+                              </span>
+                            )}
+                            {compat && idx === 0 && rankedListings.length > 1 && (
+                              <span className="px-2.5 py-0.5 bg-[#3DDC97] border border-[#111] rounded-full text-[10px] font-black shadow-[1.5px_1.5px_0_#111]">
+                                🏆 Best Match for You
+                              </span>
+                            )}
+                            {compat && (
+                              <span className="px-2.5 py-0.5 bg-white border border-[#111] rounded-full text-[10px] font-black shadow-[1.5px_1.5px_0_#111]">
+                                ⚡ {compat.score}% match
                               </span>
                             )}
                           </div>
@@ -724,6 +764,29 @@ function FindPageContent() {
                     />
                   ))}
                 </div>
+              </div>
+
+              {/* Room photo (optional custom URL) */}
+              <div className="space-y-2">
+                <Input
+                  label="Room Photo URL (optional)"
+                  type="url"
+                  placeholder="Google Drive/Unsplash link... khali chhoda toh flatly ek suitable photo pick karega"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                />
+                {imageUrl.trim() && (
+                  <div className="relative h-32 w-full max-w-[240px] rounded-[12px] border-[2px] border-[#111] overflow-hidden shadow-[2px_2px_0_#111]">
+                    <img
+                      src={imageUrl.trim()}
+                      alt="Photo preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute bottom-1 right-1 px-2 py-0.5 bg-[#3DDC97] border border-[#111] rounded-full text-[9px] font-black">
+                      Photo Preview ✓
+                    </span>
+                  </div>
+                )}
               </div>
 
               <Button type="submit" variant="primary" fullWidth size="lg">

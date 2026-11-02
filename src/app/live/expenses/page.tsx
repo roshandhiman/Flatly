@@ -42,6 +42,7 @@ export default function ExpensesPage() {
   // AI Expense Analyzer State
   const [expAiLoading, setExpAiLoading] = useState(false);
   const [expAiResult, setExpAiResult] = useState<{ analysis: string; provider: string } | null>(null);
+  const [expAiError, setExpAiError] = useState<string | null>(null);
 
   const members = flat?.members || [];
 
@@ -130,6 +131,7 @@ export default function ExpensesPage() {
   // Qwen AI Expense Analyzer
   const handleExpenseAI = async () => {
     setExpAiLoading(true);
+    setExpAiError(null);
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
@@ -145,9 +147,13 @@ export default function ExpensesPage() {
         }),
       });
       const data = await res.json();
-      if (data.analysis) setExpAiResult({ analysis: data.analysis, provider: data.provider });
+      if (res.ok && data.analysis) {
+        setExpAiResult({ analysis: data.analysis, provider: data.provider });
+      } else {
+        setExpAiError(data.error || 'AI service unreachable. Thodi der baad try karo.');
+      }
     } catch {
-      // silently fail
+      setExpAiError('AI service unreachable. Thodi der baad try karo.');
     } finally {
       setExpAiLoading(false);
     }
@@ -497,18 +503,26 @@ export default function ExpensesPage() {
             </p>
           </div>
 
-          {/* Qwen AI Expense Advisor Card */}
+          {/* AI Expense Advisor Card (cloud LLM: Groq / Gemini) */}
           <div className="p-6 bg-[#6EC6FF]/20 border-[2.5px] border-[#111] rounded-[24px] shadow-[6px_6px_0_#111] space-y-4">
             <div className="flex items-center justify-between pb-2 border-b-[2px] border-[#111]">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🤖</span>
-                <h3 className="font-heading font-black text-sm text-[#111]">Qwen AI Expense Advisor</h3>
+                <h3 className="font-heading font-black text-sm text-[#111]">AI Expense Advisor</h3>
               </div>
-              <span className="px-2 py-0.5 bg-[#3DDC97] border border-[#111] rounded-full text-[10px] font-black shadow-[1px_1px_0_#111]">Local AI</span>
+              <span className="px-2 py-0.5 bg-[#3DDC97] border border-[#111] rounded-full text-[10px] font-black shadow-[1px_1px_0_#111]">
+                {expAiResult ? expAiResult.provider.split('(')[1]?.replace(')', '') || 'Cloud AI' : 'Live AI'}
+              </span>
             </div>
             <p className="text-xs font-semibold text-gray-700">
-              Analyze your flat&apos;s hisab with local <span className="font-black text-[#111]">qwen2.5:1.5b</span> running on Ollama.
+              Your flat&apos;s hisab is analyzed by a real cloud AI model — only live provider output is shown, no canned/fake text.
             </p>
+            {expAiError && (
+              <div className="p-4 bg-[#FF6B57]/15 border-[2px] border-[#FF6B57] rounded-[16px] space-y-1.5 shadow-[2px_2px_0_#111]">
+                <div className="text-[10px] font-black text-[#FF3B30] uppercase">AI UNAVAILABLE</div>
+                <div className="text-xs font-medium text-gray-800">{expAiError}</div>
+              </div>
+            )}
             {expAiResult && (
               <div className="p-4 bg-white border-[2px] border-[#111] rounded-[16px] space-y-2 shadow-[2px_2px_0_#111]">
                 <div className="text-[10px] font-black text-emerald-700 pb-1 border-b border-gray-100">{expAiResult.provider}</div>
@@ -517,7 +531,7 @@ export default function ExpensesPage() {
             )}
             <Button type="button" variant="secondary" fullWidth size="md" disabled={expAiLoading} onClick={handleExpenseAI}>
               <Sparkles size={16} />
-              <span>{expAiLoading ? 'Qwen 2.5 Analyzing Hisab...' : expAiResult ? 'Re-Analyze Expenses' : 'Analyze Hisab with Qwen AI'}</span>
+              <span>{expAiLoading ? 'AI is Analyzing Hisab...' : expAiResult ? 'Re-Analyze Expenses' : 'Analyze Hisab with AI'}</span>
             </Button>
           </div>
         </div>
