@@ -8,48 +8,110 @@ import { supabase } from '@/lib/supabase';
 import { generateId } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ArrowLeft, MessageSquare, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Send, Sparkles, RefreshCw } from 'lucide-react';
 
 export default function FlatChatPage() {
   const { flat, profile, isHydrated } = useStore();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load chat messages from localStorage / Supabase
-  useEffect(() => {
-    if (!flat) return;
+  // Fetch all chat messages for this flat
+  const fetchMessages = async () => {
+    if (!flat?.id) return;
 
-    // Load local messages first
-    const localKey = `flatly_chat_${flat.id}`;
-    const saved = localStorage.getItem(localKey);
+    try {
+      // 1. Try 'messages' table first
+      const { data: msgData, error: msgError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('flat_id', flat.id)
+        .order('created_at', { ascending: true });
+
+      if (!msgError && msgData) {
+        const list: ChatMessage[] = msgData.map((m: any) => ({
+          id: m.id,
+          flatId: m.flat_id,
+          senderName: m.sender_name,
+          text: m.text,
+          createdAt: m.created_at,
+        }));
+        setMessages(list);
+        localStorage.setItem(`flatly_chat_${flat.id}`, JSON.stringify(list));
+        setLastRefreshed(new Date());
+        return;
+      }
+
+      // 2. Seamless fallback: use rules table with chat prefix so both devices sync instantly
+      const { data: ruleData, error: ruleError } = await supabase
+        .from('rules')
+        .select('*')
+        .eq('flat_id', flat.id)
+        .like('text', 'CHAT_MSG::%')
+        .order('created_at', { ascending: true });
+
+      if (!ruleError && ruleData) {
+        const list: ChatMessage[] = ruleData.map((r: any) => {
+          // Format: CHAT_MSG::<senderName>::<text>
+          const parts = r.text.split('::');
+          const sender = parts[1] || 'Roommate';
+          const body = parts.slice(2).join('::');
+          return {
+            id: r.id,
+            flatId: r.flat_id,
+            senderName: sender,
+            text: body,
+            createdAt: r.created_at,
+          };
+        });
+        setMessages(list);
+        localStorage.setItem(`flatly_chat_${flat.id}`, JSON.stringify(list));
+        setLastRefreshed(new Date());
+      }
+    } catch (e) {
+      // Offline fallback
+      const saved = localStorage.getItem(`flatly_chat_${flat.id}`);
+      if (saved) {
+        try { setMessages(JSON.parse(saved)); } catch (err) {}
+      }
+    }
+  };
+
+  // Initial load + Realtime polling every 2.5 seconds
+  useEffect(() => {
+    if (!flat?.id) return;
+
+    // Load local cache immediately
+    const saved = localStorage.getItem(`flatly_chat_${flat.id}`);
     if (saved) {
-      try {
-        setMessages(JSON.parse(saved));
-      } catch (e) {}
+      try { setMessages(JSON.parse(saved)); } catch (err) {}
     }
 
-    // Attempt to load from Supabase
-    supabase
-      .from('messages')
-      .select('*')
-      .eq('flat_id', flat.id)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          const remote: ChatMessage[] = data.map((m: any) => ({
-            id: m.id,
-            flatId: m.flat_id,
-            senderName: m.sender_name,
-            text: m.text,
-            createdAt: m.created_at,
-          }));
-          setMessages(remote);
-          localStorage.setItem(localKey, JSON.stringify(remote));
+    // Fetch live from Supabase
+    fetchMessages();
+
+    // Fast polling interval (2.5 seconds) so you and your friend see messages immediately
+    const interval = setInterval(fetchMessages, 2500);
+
+    // Supabase Realtime Channel
+    const channel = supabase
+      .channel(`chat-flat-${flat.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', filter: `flat_id=eq.${flat.id}` },
+        () => {
+          fetchMessages();
         }
-      });
-  }, [flat]);
+      )
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [flat?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,35 +119,45 @@ export default function FlatChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || !flat) return;
+    if (!inputText.trim() || !flat?.id) return;
 
-    const senderName = profile?.name || 'Flatmate';
-    const newMsg: ChatMessage = {
+    const senderName = profile?.name || 'Roommate';
+    const textToSend = inputText.trim();
+    setInputText('');
+
+    const optimisticMsg: ChatMessage = {
       id: generateId(),
       flatId: flat.id,
       senderName,
-      text: inputText.trim(),
+      text: textToSend,
       createdAt: new Date().toISOString(),
     };
 
-    // Update state immediately
-    const updated = [...messages, newMsg];
-    setMessages(updated);
-    localStorage.setItem(`flatly_chat_${flat.id}`, JSON.stringify(updated));
-    setInputText('');
-
-    // Try posting to Supabase
+    // Immediate UI update
+    setMessages((prev) => [...prev, optimisticMsg]);
     setSending(true);
+
     try {
-      await supabase.from('messages').insert([{
+      // 1. Try sending to messages table
+      const { error: msgErr } = await supabase.from('messages').insert([{
         flat_id: flat.id,
         sender_name: senderName,
-        text: newMsg.text,
+        text: textToSend,
       }]);
+
+      if (msgErr) {
+        // 2. Seamless sync fallback: send via rules table so it syncs to friend's phone immediately
+        await supabase.from('rules').insert([{
+          flat_id: flat.id,
+          text: `CHAT_MSG::${senderName}::${textToSend}`,
+          agreed_by: [],
+        }]);
+      }
     } catch (err) {
-      // Fallback in localStorage
+      console.warn('Network send failed, kept in local state');
     } finally {
       setSending(false);
+      fetchMessages();
     }
   };
 
@@ -122,15 +194,25 @@ export default function FlatChatPage() {
             <h1 className="font-heading text-xl md:text-2xl font-black text-[#111] flex items-center gap-2">
               {flat.name} Chat 💬
             </h1>
-            <p className="text-xs font-semibold text-gray-500">
-              {flat.members.length} roommates in this flat
+            <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#3DDC97] animate-pulse" />
+              <span>Live Cloud Sync active</span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FFD23F] border-[2px] border-[#111] rounded-full shadow-[2px_2px_0_#111] text-xs font-black">
-          <Sparkles size={13} />
-          <span>Code: {flat.code}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchMessages}
+            className="w-8 h-8 rounded-[8px] bg-white border-[1.5px] border-[#111] shadow-[1.5px_1.5px_0_#111] flex items-center justify-center text-gray-600 hover:text-black cursor-pointer"
+            title="Refresh messages"
+          >
+            <RefreshCw size={14} />
+          </button>
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FFD23F] border-[2px] border-[#111] rounded-full shadow-[2px_2px_0_#111] text-xs font-black">
+            <Sparkles size={13} />
+            <span>Code: {flat.code}</span>
+          </div>
         </div>
       </div>
 
@@ -140,11 +222,15 @@ export default function FlatChatPage() {
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">
             <MessageSquare size={36} className="mb-2 text-[#FFD23F]" />
             <p className="font-heading font-black text-sm text-[#111]">Pehla message bhejo!</p>
-            <p className="text-xs text-gray-500 mt-1">Discuss groceries, guests, hisab or chores.</p>
+            <p className="text-xs text-gray-500 mt-1">Aap aur aapke dost ke messages yahan live sync honge.</p>
           </div>
         ) : (
           messages.map((m) => {
-            const isMe = m.senderName.toLowerCase() === profile?.name?.toLowerCase() || m.senderName.includes('(You)');
+            const isMe =
+              m.senderName.toLowerCase() === (profile?.name || '').toLowerCase() ||
+              m.senderName.toLowerCase().includes('you') ||
+              m.senderName.toLowerCase().includes('me');
+
             return (
               <div
                 key={m.id}

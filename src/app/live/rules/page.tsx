@@ -32,6 +32,8 @@ export default function RulesPage() {
   const [successNote, setSuccessNote] = useState(false);
 
   const members = flat?.members || [];
+  // Filter out any internal chat sync payloads so rules stay strictly community guidelines
+  const activeRules = rules.filter((r) => !r.text.startsWith('CHAT_MSG::'));
 
   // Determine current user's member ID
   const currentMember =
@@ -111,14 +113,14 @@ export default function RulesPage() {
         <div className="lg:col-span-7 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="font-heading font-black text-sm md:text-base text-[#111] uppercase tracking-wide">
-              Agreed Rules ({rules.length})
+              Agreed Rules ({activeRules.length})
             </h2>
             <span className="text-xs font-bold text-gray-500">
               Tap &ldquo;Agree&rdquo; to add your vote
             </span>
           </div>
 
-          {rules.length === 0 ? (
+          {activeRules.length === 0 ? (
             <EmptyState
               emoji="📜"
               title="Koi rules decide nahi huye!"
@@ -126,7 +128,7 @@ export default function RulesPage() {
             />
           ) : (
             <div className="space-y-4">
-              {rules.map((rule, idx) => {
+              {activeRules.map((rule, idx) => {
                 const agreedCount = rule.agreedBy.length;
                 const totalMembers = Math.max(members.length, 1);
                 const userHasAgreed = currentMember
