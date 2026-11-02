@@ -1,168 +1,334 @@
-# Flatly 🏠 — Shared Living Web App (Stage 1)
+<p align="center">
+  <img src="assests/flatly-card.svg" alt="Flatly: Dhundhne se rehne tak, sab ek jagah" width="100%" />
+</p>
 
-Stage 1 of **Flatly**, a friendly neo-brutalist shared-living web app built mobile-first for students and young working professionals in India.
+# Flatly 🏠
 
-> **Stage 1 Scope:** Frontend UI, navigation, and local working interactions. No backend, no auth, no API calls, and zero fake/mock seed data. Every list starts completely empty and displays designed empty states.
+**Dhundhne se rehne tak, sab ek jagah.**
+
+Flatly is a mobile-first shared-living app for students and young professionals in India. One app, two modes:
+
+- **Find**: look for a flat or a roommate, or post a vacancy in your own flat.
+- **Live**: once you share a flat, manage money, chores and house rules together.
+
+Both modes work on the same flat data, so the flat you find becomes the flat you live in.
+
+**Live demo:** [flatly-teal.vercel.app](https://flatly-teal.vercel.app)
 
 ---
 
-## 🚀 Getting Started
+## Contents
+
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Getting started](#getting-started)
+  - [Frontend](#1-frontend-nextjs)
+  - [Supabase](#2-supabase-auth)
+  - [Backend API](#3-backend-api-fastapi)
+- [Environment variables](#environment-variables)
+- [API overview](#api-overview)
+- [Testing](#testing)
+- [Current status](#current-status)
+- [Known issues](#known-issues)
+- [Roadmap](#roadmap)
+
+---
+
+## Features
+
+### Find mode
+- Post a vacancy: title, area, monthly rent, spots available, description, amenities.
+- Browse listings with search and filter chips (budget, furnished, pet friendly).
+- Listing detail page with room info and a "Connect" action.
+- Lifestyle habits profile: sleep schedule, cleanliness, guests, food preference, smoking.
+- Backend: deterministic compatibility score between a user and a listing, with a hard smoking dealbreaker (score capped at 40), plus an AI-written explanation.
+
+### Live mode
+- **Flat setup:** create a flat, share a 6-character invite code, join with a code, add or remove flatmates.
+- **Expenses:** add an expense, choose who paid and who is in the split (equal, custom or percentage on the backend), see monthly spend.
+- **Balances ("Kaun kisko dega"):** net balances and a greedy debt-simplification algorithm that suggests the fewest payments. Record settlements as they happen.
+- **Chores ("Aaj ki baari"):** assign chores, mark done, rotate to the next flatmate, 30-day fairness stats.
+- **House rules:** add rules and track how many flatmates agreed. The backend can draft rules with AI.
+
+### AI features (backend)
+Powered by a local LLM through Ollama, with graceful fallbacks when the model is offline.
+
+| Feature | What it does |
+| --- | --- |
+| Match explanation | Explains in plain language why two people are or are not compatible |
+| House rules | Drafts rules from the flatmates' habits, then members approve them |
+| Polite rewrite | Turns a rude complaint into a polite message |
+| Weekly summary | Light Hinglish recap of spend and chores for the week |
+| Condition diff | Compares move-in and move-out condition notes |
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Lucide icons |
+| Auth | Supabase Auth (phone OTP, email and password, magic link, Google) |
+| Database (frontend) | Supabase Postgres schema in `supabase/schema.sql` |
+| Backend | FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic |
+| Backend database | SQLite for development, Postgres-ready through `DATABASE_URL` |
+| Backend auth | JWT with bcrypt-hashed passwords |
+| AI | Ollama with `qwen2.5:1.5b` by default, behind a provider-agnostic `LLMClient` |
+| Testing | Pytest |
+| Hosting | Vercel (frontend) |
+
+Design language: neo-brutalism with a warm cream background, thick black borders, hard offset shadows and light Hinglish microcopy.
+
+---
+
+## Project structure
+
+```
+Flatly/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx              # Home
+│   │   ├── login/                # Phone OTP, email and Google sign-in
+│   │   ├── profile/              # Name and living habits
+│   │   ├── find/                 # Listings feed, post vacancy
+│   │   │   └── [id]/             # Listing detail
+│   │   └── live/
+│   │       ├── page.tsx          # Flat dashboard and flatmates
+│   │       ├── expenses/         # Expenses and balances
+│   │       ├── chores/           # Chores and rotation
+│   │       └── rules/            # House rules
+│   ├── components/
+│   │   ├── layout/               # AppHeader, BottomTabBar, FirstRunModal
+│   │   └── ui/                   # Button, Card, Chip, BottomSheet, Avatar, ...
+│   ├── lib/
+│   │   ├── supabase.ts           # Supabase client
+│   │   ├── auth.ts               # Auth helpers
+│   │   ├── AuthContext.tsx       # Session provider
+│   │   ├── store.ts              # App state (React Context, localStorage)
+│   │   ├── balance.ts            # Debt-simplification algorithm
+│   │   ├── types.ts              # Shared TypeScript types
+│   │   └── utils.ts
+│   └── proxy.ts                  # Route protection for /live and /profile
+├── supabase/
+│   └── schema.sql                # Tables and row level security policies
+├── backend/
+│   ├── app/
+│   │   ├── api/v1/               # auth, users, flats, expenses, chores, rules, listings
+│   │   ├── ai/                   # LLM client, AI endpoints, prompt templates
+│   │   ├── services/             # balances, chores, matching, auth
+│   │   ├── models/               # SQLAlchemy models
+│   │   ├── schemas/              # Pydantic schemas
+│   │   ├── config.py             # Settings loaded from environment
+│   │   └── main.py
+│   ├── alembic/                  # Database migrations
+│   ├── scripts/seed.py           # Optional dev seed data
+│   ├── tests/
+│   ├── API_CONTRACT.md           # Request and response examples
+│   └── .env.example
+├── public/
+└── openapi.json                  # Exported API schema
+```
+
+---
+
+## Getting started
 
 ### Prerequisites
-- Node.js 18+ or 20+
-- npm or yarn
 
-### Run Locally
+- Node.js 20 or newer and npm
+- Python 3.11 or 3.12 (backend only)
+- [Ollama](https://ollama.com) (backend AI features only)
+- A free [Supabase](https://supabase.com) project
+
+### 1. Frontend (Next.js)
+
 ```bash
-# Clone and enter directory
-cd think2build
-
-# Install dependencies (Next.js 16, React 19, Tailwind CSS v4, Lucide React)
+git clone https://github.com/roshandhiman/Flatly.git
+cd Flatly
 npm install
+```
 
-# Start development server
+Create a `.env.local` file in the project root (see [Environment variables](#environment-variables)):
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-or-publishable-key>
+```
+
+Then start the dev server:
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser. On desktop, the interface is centered in a 430px-wide phone-style frame.
+Open [http://localhost:3000](http://localhost:3000). On desktop the app renders inside a phone-sized frame.
 
----
+Other scripts:
 
-## 🎨 Design System (Neo-Brutalism)
-
-- **Borders & Shadows:** Thick 2.5px solid black borders (`#111111`) with hard 4px 4px offset shadows (`#111111`, no blur, no gradients).
-- **Border Radius:** 12px for standard cards, buttons, chips; 16px/20px for hero cards and bottom sheets.
-- **Palette:**
-  - Background: Warm cream `#FFF8EC`
-  - Text & Border: `#111111`
-  - Primary Accent (Yellow): `#FFD23F`
-  - Mint (You get / Success): `#3DDC97`
-  - Coral / Accent: `#FF6B57`
-  - Sky Blue (Info): `#6EC6FF`
-  - Red (You owe / Alert): `#FF3B3B`
-- **Typography:**
-  - Headings: `Space Grotesk` (bold) via `next/font/google`
-  - Body: `Inter` via `next/font/google`
-- **Tactile Buttons:** Interactive press states with `translate(2px, 2px)` on hover and `translate(4px, 4px)` with shadow collapse on active press.
-- **Microcopy Tone:** Simple, friendly, light Hinglish (*"Aaj ki baari"*, *"Kaun kisko dega?"*, *"Hisab-Kitab"*, *"Sab hisab barabar!"*).
-
----
-
-## 📱 Screens & Features (Stage 1)
-
-1. **Home (`/`)**
-   - Personal greeting with user's saved profile name (`Hey [Name]! 👋`).
-   - First-run welcome modal to onboard new users.
-   - Quick Mode toggle: `Find | Live`.
-   - Action cards: *"Mujhe flat chahiye"* & *"Mere flat mein roommate chahiye"*.
-   - Flat summary card: *"Kaun kisko dega?"* net balance summary and *"Aaj ki baari"* today's chore banner.
-   - Friendly empty state with *"Create your flat"* button when no flat exists.
-
-2. **Profile & Habits (`/profile`)**
-   - Edit display name.
-   - Chunky selectable chip preferences:
-     - 🌙 Sleep schedule (Early bird / Moderate / Night owl)
-     - 🧹 Cleanliness & tidiness
-     - 👥 Guest policies
-     - 🍲 Dietary preference
-     - 🚭 Smoking & lifestyle
-   - Saved locally with instant feedback.
-   - Local data reset option for testing empty states.
-
-3. **Find (`/find`)**
-   - Two sub-modes: **Find a room** and **Post a vacancy**.
-   - **Post Vacancy Form:** Title, area/location, monthly rent, spots available, description, and amenity chips.
-   - **Listings Feed:** Search bar (by title, location, tag) + filter chips (*All*, *Under ₹10k*, *Under ₹15k*, *Furnished*, *Pet friendly*).
-   - Designed empty state: *"Abhi koi listing nahi. Pehli listing post karo."*
-   - Delete listing capability.
-
-4. **Listing Detail (`/find/[id]`)**
-   - Full room details, pricing, spots, features, and vibe description.
-   - Clean, verified info (*no invented match percentages or fake scores*).
-   - Interactive "Connect with Roommate" action with Stage 1 explainer modal.
-
-5. **Live Flat Dashboard (`/live`)**
-   - If no flat: "Create your flat" form (name, rent) and "Join with invite code" input.
-   - If flat exists: Flat summary card with 6-char shareable invite code (with 1-tap copy).
-   - Flatmates management: Add and remove roommates by name (generates unique colored avatar initials).
-   - Navigational hubs for Expenses, Chores, and House Rules.
-
-6. **Expenses & Balances (`/live/expenses`)**
-   - **Total Spend Counter:** Computes real monthly expenditure from entered expenses.
-   - **Add Expense Bottom Sheet:** Title, amount, paid by, and multi-member split checkboxes (equal split default).
-   - **Expenses Feed:** Displays title, payer avatar, date, amount, per-person share, and split avatars.
-   - **Kaun Kisko Dega (Balances Tab):** Pure debt-minimization algorithm that calculates who owes whom. Includes "Settle" button to record settlements.
-
-7. **Chores & Aaj Ki Baari (`/live/chores`)**
-   - **Add Chore Bottom Sheet:** Task name, assignee, frequency (weekly/one-time), and due day.
-   - **Chore Cards:** Assignee avatar, status pill (Pending / Done), "Mark done" toggle, and "Rotate" button to cycle chore to the next roommate.
-   - **Real Leaderboard:** Monthly completed chores counted strictly from recorded completions.
-
-8. **House Rules (`/live/rules`)**
-   - Add custom flat rules.
-   - Member agreement voting (*"X/Y agreed"*).
-   - Disabled "Generate with AI (Stage 2)" button.
-
----
-
-## 📁 Folder Structure
-
+```bash
+npm run build   # production build
+npm run start   # serve the production build
+npm run lint    # ESLint
 ```
-think2build/
-├── public/                 # Static assets
-├── src/
-│   ├── app/                # Next.js App Router routes
-│   │   ├── find/
-│   │   │   ├── [id]/
-│   │   │   │   └── page.tsx   # Listing detail view
-│   │   │   └── page.tsx       # Find rooms & post vacancy
-│   │   ├── live/
-│   │   │   ├── chores/
-│   │   │   │   └── page.tsx   # Chores & auto-rotation
-│   │   │   ├── expenses/
-│   │   │   │   └── page.tsx   # Expenses & balance settlement
-│   │   │   ├── rules/
-│   │   │   │   └── page.tsx   # House rules & agreement voting
-│   │   │   └── page.tsx       # Live flat dashboard & members
-│   │   ├── profile/
-│   │   │   └── page.tsx       # Profile & living habits
-│   │   ├── globals.css        # Neo-brutalist theme & utility classes
-│   │   ├── layout.tsx         # Phone frame container & navigation
-│   │   └── page.tsx           # Home screen & summary widgets
-│   ├── components/
-│   │   ├── layout/
-│   │   │   ├── AppHeader.tsx      # Top bar with Flatly logo & mode toggle
-│   │   │   ├── BottomTabBar.tsx   # Fixed bottom navigation (Home, Find, Live, Profile)
-│   │   │   └── FirstRunModal.tsx  # Name onboarding modal on initial visit
-│   │   └── ui/
-│   │       ├── Avatar.tsx         # Member avatar with initials & color
-│   │       ├── BottomSheet.tsx    # Slide-up modal sheet
-│   │       ├── Button.tsx         # Neo-brutalist tactile button
-│   │       ├── Card.tsx           # Bordered offset-shadow card
-│   │       ├── Chip.tsx           # Selectable pill filter / habit chip
-│   │       ├── EmptyState.tsx     # Standard empty list visual & CTA
-│   │       ├── Input.tsx          # Brutalist input field with inline errors
-│   │       ├── StatusPill.tsx     # Color-coded badge (Pending/Done/Owe/Get)
-│   │       ├── Tabs.tsx           # Chunky tab switcher
-│   │       └── TextArea.tsx       # Brutalist textarea with inline errors
-│   └── lib/
-│       ├── balance.ts      # Pure greedy debt-simplification algorithm
-│       ├── store.ts        # React Context store with localStorage persistence
-│       ├── types.ts        # TypeScript definitions for Member, Flat, Expense, etc.
-│       └── utils.ts        # Formatting, IDs, and color utilities
-├── package.json
-├── tsconfig.json
-└── README.md
+
+> This project uses a recent Next.js release with breaking changes. See `AGENTS.md` and `node_modules/next/dist/docs/` before changing framework-level code.
+
+### 2. Supabase (auth)
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor**, paste the contents of `supabase/schema.sql` and run it. Read [Known issues](#known-issues) first.
+3. Under **Authentication → Providers**, enable the sign-in methods you want: Phone (needs an SMS provider), Email, Google.
+4. Under **Authentication → URL Configuration**, add `http://localhost:3000` and your deployed URL as redirect URLs.
+5. Copy the project URL and the anon or publishable key from **Project Settings → API** into `.env.local`.
+
+### 3. Backend API (FastAPI)
+
+```bash
+cd backend
+python3.12 -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env              # then edit values, especially JWT_SECRET
+alembic upgrade head              # create the database schema
+uvicorn app.main:app --reload --port 8000
+```
+
+- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+- ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- Health check: `GET /health`
+- The OpenAPI schema is re-exported to `openapi.json` on startup.
+
+For the AI endpoints, pull the model once and keep Ollama running:
+
+```bash
+ollama pull qwen2.5:1.5b
+```
+
+Optional sample data (users, a flat, expenses, chores, rules, a listing). It is never run automatically:
+
+```bash
+python scripts/seed.py
 ```
 
 ---
 
-## 🔮 What is Intentionally NOT Done (Reserved for Stage 2)
+## Environment variables
 
-As specified in the Stage 1 roadmap:
-1. **User Authentication & Profiles:** No phone OTP, Google OAuth, or session tokens.
-2. **Cloud Database:** No PostgreSQL/Supabase/Firebase database; state is maintained in `localStorage`.
-3. **Cross-Device Flat Joining:** Roommate invite codes work in-app/locally, but real cross-network synchronization is deferred to backend integration.
-4. **AI Compatibility Match Percentage:** No fake percentage bars; real ML matching based on lifestyle habits will be implemented in Stage 2.
-5. **Real-Time Roommate Chat:** "Connect" action triggers a preview modal rather than live WebSockets.
-6. **AI House Rule Generator:** Disabled button placeholder ready for LLM integration.
+### Frontend (`.env.local`)
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Your Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon or publishable key |
+
+Never commit `.env.local`. Both variables are exposed to the browser, so only use the anon or publishable key, never the service role key.
+
+### Backend (`backend/.env`)
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | `sqlite:///./flatly.db` | SQLAlchemy URL. Use a Postgres URL in production |
+| `JWT_SECRET` | placeholder | **Change this.** Secret used to sign tokens |
+| `JWT_ALGORITHM` | `HS256` | JWT signing algorithm |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `10080` | Token lifetime (7 days) |
+| `CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins |
+| `LLM_PROVIDER` | `ollama` | `ollama` or `openai` |
+| `LLM_BASE_URL` | `http://127.0.0.1:11434` | LLM server URL |
+| `LLM_API_KEY` | `ollama` | API key if the provider needs one |
+| `LLM_MODEL` | `qwen2.5:1.5b` | Model name |
+| `AI_RATE_LIMIT_PER_MINUTE` | `20` | Rate limit for AI endpoints |
+
+---
+
+## API overview
+
+Base URL: `http://localhost:8000/api/v1`. Authenticated routes need `Authorization: Bearer <token>`. Full request and response examples live in [`backend/API_CONTRACT.md`](backend/API_CONTRACT.md).
+
+| Area | Endpoints |
+| --- | --- |
+| Auth | `POST /auth/signup`, `POST /auth/login`, `GET /auth/me` |
+| Users | `PUT /users/me/habits` |
+| Flats | `POST /flats`, `GET /flats/{id}`, `POST /flats/join`, `POST /flats/{id}/members`, `DELETE /flats/{id}/members/{member_id}` |
+| Expenses | `POST` and `GET /flats/{id}/expenses`, `DELETE /flats/{id}/expenses/{expense_id}` |
+| Balances | `GET /flats/{id}/balances`, `POST /flats/{id}/settlements` |
+| Chores | `POST` and `GET /flats/{id}/chores`, `DELETE /flats/{id}/chores/{chore_id}`, `POST /chores/{chore_id}/complete`, `POST /chores/{chore_id}/rotate`, `GET /flats/{id}/chores/fairness` |
+| Rules | `POST` and `GET /flats/{id}/rules`, `DELETE /flats/{id}/rules/{rule_id}`, `POST /rules/{id}/approve` |
+| Listings | `POST` and `GET /listings`, `GET` and `DELETE /listings/{id}`, `GET /listings/{id}/compatibility` |
+| AI | `POST /ai/match-explanation`, `POST /ai/house-rules`, `POST /ai/flats/{id}/rules/confirm`, `POST /ai/polite-rewrite`, `GET /ai/weekly-summary/{flat_id}`, `POST /ai/condition-diff` |
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "aarav@flatly.app", "password": "password123"}'
+```
+
+(Works after running `scripts/seed.py`.)
+
+---
+
+## Testing
+
+Backend tests cover balance maths, settle-up minimisation, chore rotation and fairness, compatibility scoring, end-to-end API flows and AI fallbacks when the LLM is offline.
+
+```bash
+cd backend
+PYTHONPATH=. pytest
+```
+
+The frontend currently has linting only (`npm run lint`).
+
+---
+
+## Current status
+
+Flatly is being built in stages, and the two halves are not fully connected yet.
+
+| Part | State |
+| --- | --- |
+| Frontend UI (Find and Live screens) | Working. App data (flat, expenses, chores, rules, listings) is stored in the browser's `localStorage` |
+| Frontend auth | Supabase Auth: phone OTP, email and password, magic link, Google |
+| Supabase schema | Written, not yet used by the frontend for app data |
+| FastAPI backend | Complete and tested, runs independently |
+| Frontend ↔ backend | **Not connected yet.** The UI does not call the FastAPI API |
+
+Because app data lives in `localStorage`, flats and invite codes do not sync across devices yet.
+
+---
+
+## Known issues
+
+- **Schema typo:** `supabase/schema.sql` contains `create index if unfair on public.flats(code);`, which is invalid SQL and stops the script there. Change it to `create index if not exists idx_flats_code on public.flats(code);` before running.
+- **Open row level security:** most policies in `supabase/schema.sql` use `using (true)`, so any client can read and write flats, expenses, chores and rules. Tighten them to flat members before storing real user data.
+- **Fallback credentials in code:** `src/lib/supabase.ts` falls back to a hard-coded Supabase URL and key when the env variables are missing. Remove the fallbacks so the app fails loudly instead, and rotate the key if you do not want that project public.
+- **Package name:** `package.json` still uses the name `think2build`.
+- **Two auth systems:** the frontend uses Supabase Auth while the backend issues its own JWTs. Pick one before connecting them.
+
+---
+
+## Roadmap
+
+**Next**
+- Move app data from `localStorage` to the database and sync flats across devices.
+- Connect the frontend to the backend (or fully to Supabase) and unify auth.
+- Real-time updates for expenses and chores.
+- Show compatibility score and AI explanation in the Find UI.
+- Generate and approve house rules with AI from the Live UI.
+
+**Later**
+- UPI deep links for settle up.
+- Recurring bills and rent tracker.
+- Shared grocery list and shared items tracker.
+- Anonymous complaint box with AI polite rewrite.
+- Meter photo OCR for electricity bills.
+- Move-in and move-out photo report for deposits.
+- Weekly summary sharing to the flat group.
+- Push notifications.
+
+---
+
+## License
+
+No license file has been added yet. Add one (for example MIT) if you want others to reuse the code.
