@@ -44,6 +44,7 @@ export default function ChoresPage() {
     deleteChore,
     markChoreDone,
     rotateChore,
+    isHydrated,
   } = useStore();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -55,6 +56,13 @@ export default function ChoresPage() {
   const [choreAddedNote, setChoreAddedNote] = useState(false);
 
   const members = flat?.members || [];
+
+  // Automatically select the first member if none selected
+  useEffect(() => {
+    if (!assignedTo && members.length > 0) {
+      setAssignedTo(members[0].id);
+    }
+  }, [members, assignedTo]);
 
   const handleOpenAdd = () => {
     setTask('');
@@ -118,6 +126,14 @@ export default function ChoresPage() {
 
     setCompletionsCountByMember(counts);
   }, [chores, members]);
+
+  if (!isHydrated) {
+    return (
+      <div className="p-8 text-center font-heading font-black text-sm text-[#111]">
+        Loading your pad chores... 🧹
+      </div>
+    );
+  }
 
   if (!flat) {
     return (
@@ -317,7 +333,10 @@ export default function ChoresPage() {
                       <button
                         key={m.id}
                         type="button"
-                        onClick={() => setAssignedTo(m.id)}
+                        onClick={() => {
+                          setAssignedTo(m.id);
+                          if (errors.assignedTo) setErrors({ ...errors, assignedTo: '' });
+                        }}
                         className={`flex items-center gap-2 p-2 rounded-[10px] border-[2px] border-[#111] text-xs font-bold transition-all cursor-pointer ${
                           assignedTo === m.id
                             ? 'bg-[#FFD23F] shadow-[2px_2px_0_#111]'
@@ -329,6 +348,9 @@ export default function ChoresPage() {
                       </button>
                     ))}
                   </div>
+                  {errors.assignedTo && (
+                    <p className="text-xs font-bold text-red-600">{errors.assignedTo}</p>
+                  )}
                 </div>
 
                 {/* Schedule Day */}
@@ -466,8 +488,11 @@ export default function ChoresPage() {
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => setAssignedTo(m.id)}
-                  className={`flex items-center gap-2 p-2 rounded-[10px] border-[2px] border-[#111] text-xs font-bold transition-all ${
+                  onClick={() => {
+                    setAssignedTo(m.id);
+                    if (errors.assignedTo) setErrors({ ...errors, assignedTo: '' });
+                  }}
+                  className={`flex items-center gap-2 p-2 rounded-[10px] border-[2px] border-[#111] text-xs font-bold transition-all cursor-pointer ${
                     assignedTo === m.id ? 'bg-[#FFD23F]' : 'bg-white'
                   }`}
                 >
@@ -476,6 +501,9 @@ export default function ChoresPage() {
                 </button>
               ))}
             </div>
+            {errors.assignedTo && (
+              <p className="text-xs font-bold text-red-600">{errors.assignedTo}</p>
+            )}
           </div>
 
           <Button type="submit" variant="primary" fullWidth size="lg">
